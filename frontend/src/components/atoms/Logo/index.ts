@@ -1,3 +1,2 @@
 // frontend/src/components/atoms/Logo/index.ts
-export { Logo, type LogoProps } from './Logo';
-export { default } from './Logo';
+export { Logo } from './Logo';
