@@ -1,13 +1,14 @@
 // frontend/src/components/atoms/Button/Button.tsx
 import React from 'react';
 
-export interface ButtonProps {
+interface ButtonProps {
   children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   onClick?: () => void;
   disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -17,31 +18,51 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   onClick,
   disabled = false,
+  type = 'button',
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-  
-  const variantClasses = {
-    primary: 'bg-[#db9942] text-white hover:bg-[#c8883a] focus:ring-[#db9942]',
-    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500',
-    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'primary':
+        return 'bg-naramakna-gold hover:bg-yellow-600 text-white font-medium';
+      case 'secondary':
+        return 'bg-naramakna-gray-600 hover:bg-naramakna-gray-700 text-white font-medium';
+      case 'outline':
+        return 'border-2 border-naramakna-gold text-naramakna-gold hover:bg-naramakna-gold hover:text-white font-medium';
+      case 'ghost':
+        return 'text-naramakna-gray-700 hover:bg-naramakna-gray-100 font-medium';
+      default:
+        return 'bg-naramakna-gold hover:bg-yellow-600 text-white font-medium';
+    }
   };
-  
-  const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base',
+
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'sm':
+        return 'px-3 py-1.5 text-sm';
+      case 'md':
+        return 'px-4 py-2 text-base';
+      case 'lg':
+        return 'px-6 py-3 text-lg';
+      default:
+        return 'px-4 py-2 text-base';
+    }
   };
-  
+
   return (
     <button
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      type={type}
       onClick={onClick}
       disabled={disabled}
+      className={`
+        ${getVariantClasses()}
+        ${getSizeClasses()}
+        rounded-lg transition-all duration-200 ease-in-out
+        focus:outline-none focus:ring-2 focus:ring-naramakna-gold focus:ring-opacity-50
+        disabled:opacity-50 disabled:cursor-not-allowed
+        ${className}
+      `.trim()}
     >
       {children}
     </button>
   );
 };
-
-export default Button;

@@ -9,7 +9,7 @@ interface AdSectionProps {
   href?: string;
   isPlaceholder?: boolean;
   size?: 'header' | 'regular';
-} 
+}
 
 export const AdSection: React.FC<AdSectionProps> = ({
   className = '',
