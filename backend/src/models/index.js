@@ -41,6 +41,9 @@ Comment.belongsTo(Post, { foreignKey: 'comment_post_ID', as: 'post' });
 Post.hasMany(TermRelationship, { foreignKey: 'object_id', as: 'termRelationships' });
 TermRelationship.belongsTo(Post, { foreignKey: 'object_id', as: 'post' });
 
+Post.hasOne(PostViews, { foreignKey: 'id', sourceKey: 'ID', as: 'views' });
+PostViews.belongsTo(Post, { foreignKey: 'id', targetKey: 'ID', as: 'post' });
+
 // Term relationships
 Term.hasMany(TermTaxonomy, { foreignKey: 'term_id', as: 'taxonomies' });
 TermTaxonomy.belongsTo(Term, { foreignKey: 'term_id', as: 'term' });

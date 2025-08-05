@@ -11,7 +11,9 @@ const { uploadPostImages, handleUploadError } = require('../middleware/upload');
 
 // Content feed and discovery
 router.get('/feed', ContentController.getFeed);
+router.get('/trending', ContentController.getTrending);
 router.get('/stats', ContentController.getStats);
+router.get('/categories', ContentController.getCategories);
 
 // Content by type
 router.get('/type/:type', ContentController.getByType);

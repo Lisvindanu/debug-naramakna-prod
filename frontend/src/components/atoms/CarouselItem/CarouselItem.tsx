@@ -19,6 +19,8 @@ export const CarouselItem: React.FC<CarouselItemProps> = ({
   isFeatured = false,
   className = ''
 }) => {
+  // Debug removed - production ready
+
   const handleClick = () => {
     if (href) {
       window.open(href, '_blank');
