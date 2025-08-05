@@ -1,0 +1,1 @@
+export { TrendingSectionWithFilter } from './TrendingSectionWithFilter';

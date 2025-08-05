@@ -1,5 +1,7 @@
 import React from 'react';
 import { TrendingList } from '../../molecules/TrendingList';
+import { useTrending } from '../../../hooks/useTrending.ts';
+import type { Article } from '../../../services/api/articles';
 
 interface TrendingArticle {
   id: string;
@@ -13,13 +15,46 @@ interface TrendingArticle {
 interface TrendingSectionProps {
   articles?: TrendingArticle[];
   className?: string;
+  limit?: number;
+  category?: string;
 }
 
 export const TrendingSection: React.FC<TrendingSectionProps> = ({
   articles = [],
-  className = ''
+  className = '',
+  limit = 5,
+  category
 }) => {
-  // Dummy data jika tidak ada articles yang diberikan
+  // Fetch trending content dari API berdasarkan views
+  const { data: apiResponse, loading, error } = useTrending({ 
+    limit, 
+    category,
+    type: 'post' 
+  });
+  
+  const apiArticles = apiResponse?.posts || [];
+  const criteria = apiResponse?.criteria || 'most_viewed';
+
+  // Helper function untuk convert API data ke format TrendingArticle
+  const convertToTrendingArticle = (article: Article): TrendingArticle => {
+    const timeAgo = new Date(article.date).toLocaleString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit'
+    });
+
+    return {
+      id: article.id,
+      title: article.title,
+      source: article.author?.display_name || 'naramaknaNEWS',
+      timeAgo,
+      imageSrc: article.metadata?.thumbnail_url || article.metadata?._thumbnail_url,
+      href: `/artikel/${article.slug}`
+    };
+  };
+
+  // Dummy data untuk fallback
   const defaultArticles: TrendingArticle[] = [
     {
       id: '1',
@@ -58,7 +93,49 @@ export const TrendingSection: React.FC<TrendingSectionProps> = ({
     }
   ];
 
-  const displayArticles = articles.length > 0 ? articles.slice(0, 5) : defaultArticles;
+  // Prioritas: props articles > API data > fallback data
+  let displayArticles: TrendingArticle[] = [];
+  
+  if (articles.length > 0) {
+    displayArticles = articles.slice(0, 5);
+  } else if (!loading && !error && apiArticles.length > 0) {
+    displayArticles = apiArticles.map(convertToTrendingArticle).slice(0, 5);
+  } else {
+    displayArticles = defaultArticles;
+  }
+
+  // Loading state untuk trending section
+  if (loading && articles.length === 0) {
+    return (
+      <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center space-x-2">
+            <div className="w-1 h-6 bg-naramakna-gold rounded-full"></div>
+            <h2 className="text-lg font-semibold text-gray-900">Trending</h2>
+          </div>
+        </div>
+        <div className="p-4">
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="animate-pulse flex space-x-3">
+                <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error handling (silent fallback)
+  if (error && articles.length === 0) {
+    console.warn('TrendingSection API Error:', error);
+    // Tetap lanjutkan dengan fallback data
+  }
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
@@ -66,7 +143,9 @@ export const TrendingSection: React.FC<TrendingSectionProps> = ({
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-2">
           <div className="w-1 h-6 bg-naramakna-gold rounded-full"></div>
-          <h2 className="text-lg font-semibold text-gray-900">Trending</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {criteria === 'most_recent' ? 'Terbaru' : 'Trending'}
+          </h2>
         </div>
         <a 
           href="#" 

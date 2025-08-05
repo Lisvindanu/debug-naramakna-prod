@@ -1,4 +1,6 @@
 import React from 'react';
+import { useContent } from '../../../hooks/useContent';
+import type { Article } from '../../../services/api/articles';
 
 interface NewsItem {
   id: string;
@@ -11,81 +13,124 @@ interface NewsItem {
 }
 
 interface CategoryNewsSectionProps {
-  category: string;
+  category: string; // This will be category slug
+  categoryDisplayName?: string; // Optional display name override
   newsItems?: NewsItem[];
   className?: string;
 }
 
 export const CategoryNewsSection: React.FC<CategoryNewsSectionProps> = ({
   category,
+  categoryDisplayName,
   newsItems = [],
   className = ''
 }) => {
-     // Dummy data untuk kategori berita
-   const defaultNewsItems: NewsItem[] = [
-     {
-       id: '1',
-       title: 'Berita Terkini dari Kategori ' + category,
-       source: 'naramaknaNEWS',
-       timeAgo: '2 jam'
-     },
-     {
-       id: '2',
-       title: 'Update Terbaru ' + category,
-       source: 'naramaknaNEWS',
-       timeAgo: '4 jam'
-     },
-     {
-       id: '3',
-       title: 'Perkembangan ' + category + ' Terkini',
-       source: 'naramaknaNEWS',
-       timeAgo: '6 jam'
-     },
-     {
-       id: '4',
-       title: 'Berita Terbaru ' + category + ' Hari Ini',
-       source: 'naramaknaNEWS',
-       timeAgo: '1 jam'
-     },
-     {
-       id: '5',
-       title: 'Update Terkini ' + category + ' Terbaru',
-       source: 'naramaknaNEWS',
-       timeAgo: '3 jam'
-     },
-     {
-       id: '6',
-       title: 'Berita ' + category + ' Terpopuler Minggu Ini',
-       source: 'naramaknaNEWS',
-       timeAgo: '5 jam'
-     },
-     {
-       id: '7',
-       title: 'Analisis Mendalam ' + category + ' Terkini',
-       source: 'naramaknaNEWS',
-       timeAgo: '7 jam'
-     },
-     {
-       id: '8',
-       title: 'Fakta Menarik ' + category + ' yang Perlu Diketahui',
-       source: 'naramaknaNEWS',
-       timeAgo: '9 jam'
-     },
-     {
-       id: '9',
-       title: 'Update Terbaru ' + category + ' Hari Ini',
-       source: 'naramaknaNEWS',
-       timeAgo: '11 jam'
-     },
-     {
-       id: '10',
-       title: 'Berita ' + category + ' yang Viral di Media Sosial',
-       source: 'naramaknaNEWS',
-       timeAgo: '13 jam'
-     }
-   ];
+  // Fetch real data from API
+  const { data: apiArticles, loading, error } = useContent({
+    limit: 10,
+    category: category,
+    type: 'post'
+  });
 
-  const displayNewsItems = newsItems.length > 0 ? newsItems : defaultNewsItems;
+  // Convert API articles to NewsItem format
+  const convertToNewsItem = (article: Article): NewsItem => {
+    const timeAgo = new Date(article.date).toLocaleString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit'
+    });
+
+    return {
+      id: article.id,
+      title: article.title,
+      source: article.author?.display_name || 'naramaknaNEWS',
+      timeAgo,
+      imageSrc: article.metadata?.thumbnail_url || article.metadata?._thumbnail_url,
+      href: `/artikel/${article.slug}`,
+      isAd: false
+    };
+  };
+
+  // Dummy data untuk fallback
+  const defaultNewsItems: NewsItem[] = [
+    {
+      id: '1',
+      title: 'Berita Terkini dari Kategori ' + (categoryDisplayName || category),
+      source: 'naramaknaNEWS',
+      timeAgo: '2 jam'
+    },
+    {
+      id: '2',
+      title: 'Update Terbaru ' + (categoryDisplayName || category),
+      source: 'naramaknaNEWS',
+      timeAgo: '4 jam'
+    },
+    {
+      id: '3',
+      title: 'Perkembangan ' + (categoryDisplayName || category) + ' Terkini',
+      source: 'naramaknaNEWS',
+      timeAgo: '6 jam'
+    },
+    {
+      id: '4',
+      title: 'Berita Terbaru ' + (categoryDisplayName || category) + ' Hari Ini',
+      source: 'naramaknaNEWS',
+      timeAgo: '1 jam'
+    },
+    {
+      id: '5',
+      title: 'Update Terkini ' + (categoryDisplayName || category) + ' Terbaru',
+      source: 'naramaknaNEWS',
+      timeAgo: '3 jam'
+    },
+    {
+      id: '6',
+      title: 'Berita ' + (categoryDisplayName || category) + ' Terpopuler Minggu Ini',
+      source: 'naramaknaNEWS',
+      timeAgo: '5 jam'
+    },
+    {
+      id: '7',
+      title: 'Analisis Mendalam ' + (categoryDisplayName || category) + ' Terkini',
+      source: 'naramaknaNEWS',
+      timeAgo: '7 jam'
+    },
+    {
+      id: '8',
+      title: 'Fakta Menarik ' + (categoryDisplayName || category) + ' yang Perlu Diketahui',
+      source: 'naramaknaNEWS',
+      timeAgo: '9 jam'
+    },
+    {
+      id: '9',
+      title: 'Update Terbaru ' + (categoryDisplayName || category) + ' Hari Ini',
+      source: 'naramaknaNEWS',
+      timeAgo: '11 jam'
+    },
+    {
+      id: '10',
+      title: 'Berita ' + (categoryDisplayName || category) + ' yang Viral di Media Sosial',
+      source: 'naramaknaNEWS',
+      timeAgo: '13 jam'
+    }
+  ];
+
+  // Prioritas: props newsItems > API data > fallback data
+  let displayNewsItems: NewsItem[] = [];
+  
+  if (newsItems.length > 0) {
+    displayNewsItems = newsItems;
+  } else if (!loading && !error && apiArticles.length > 0) {
+    displayNewsItems = apiArticles.map(convertToNewsItem);
+  } else {
+    displayNewsItems = defaultNewsItems;
+  }
+
+  // Determine display name for category
+  const displayCategoryName = categoryDisplayName || 
+    (apiArticles[0]?.categories?.[0]?.name) || 
+    category.charAt(0).toUpperCase() + category.slice(1);
 
   const NewsItemComponent = ({ item }: { item: NewsItem }) => (
     <div className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors duration-200">
@@ -130,7 +175,7 @@ export const CategoryNewsSection: React.FC<CategoryNewsSectionProps> = ({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
             <div className="w-1 h-6 bg-naramakna-gold rounded-full"></div>
-            <h2 className="text-xl font-semibold text-gray-900">{category}</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{displayCategoryName}</h2>
           </div>
           <a 
             href="#" 
@@ -151,8 +196,8 @@ export const CategoryNewsSection: React.FC<CategoryNewsSectionProps> = ({
                {/* Full Image Background - Extends to bottom */}
                <div className="w-full h-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
                  <div className="text-center">
-                   <span className="text-white text-6xl font-bold">{category.charAt(0)}</span>
-                   <div className="text-white text-sm mt-2">{category}</div>
+                   <span className="text-white text-6xl font-bold">{displayCategoryName.charAt(0)}</span>
+                   <div className="text-white text-sm mt-2">{displayCategoryName}</div>
                  </div>
                </div>
                
@@ -177,7 +222,7 @@ export const CategoryNewsSection: React.FC<CategoryNewsSectionProps> = ({
              <div className="p-4 border-b border-gray-200">
                <div className="flex items-center space-x-2">
                  <div className="w-1 h-6 bg-teal-500 rounded-full"></div>
-                 <h2 className="text-lg font-semibold text-gray-900">Trending di {category}</h2>
+                 <h2 className="text-lg font-semibold text-gray-900">Populer di {displayCategoryName}</h2>
                </div>
              </div>
              <div className="p-4 max-h-96 overflow-y-auto scrollbar-hide">
@@ -192,7 +237,7 @@ export const CategoryNewsSection: React.FC<CategoryNewsSectionProps> = ({
              <div className="p-4 border-b border-gray-200">
                <div className="flex items-center space-x-2">
                  <div className="w-1 h-6 bg-teal-500 rounded-full"></div>
-                 <h2 className="text-lg font-semibold text-gray-900">Terbaru di {category}</h2>
+                 <h2 className="text-lg font-semibold text-gray-900">Terbaru di {displayCategoryName}</h2>
                </div>
              </div>
              <div className="p-4 max-h-96 overflow-y-auto scrollbar-hide">

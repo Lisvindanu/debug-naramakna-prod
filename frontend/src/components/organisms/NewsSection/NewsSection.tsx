@@ -181,7 +181,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center space-x-2">
                 <div className="w-1 h-6 bg-teal-500 rounded-full"></div>
-                <h2 className="text-lg font-semibold text-gray-900">Trending di News</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Populer di News</h2>
               </div>
             </div>
             <div className="p-4 max-h-96 overflow-y-auto scrollbar-hide">

@@ -4,12 +4,13 @@ import { NavHeader } from '../../molecules/NavHeader';
 import { NavKategori } from '../../molecules/NavKategori';
 import { NavService } from '../../molecules/NavService';
 import { AdSection } from '../../organisms/AdSection';
-import { TrendingSection } from '../../organisms/TrendingSection';
+import { TrendingSectionWithFilter } from '../../organisms/TrendingSectionWithFilter';
 import { MainContentSection } from '../../organisms/MainContentSection';
 import { PollingSection } from '../../organisms/PollingSection';
 import { VideoSection } from '../../organisms/VideoSection';
 import { NewsSection } from '../../organisms/NewsSection';
-import { CategoryNewsSection } from '../../organisms/CategoryNewsSection';
+import { DynamicCategorySections } from '../../organisms/DynamicCategorySections';
+
 import { SearchInput } from '../../atoms/SearchInput';
 import { Button } from '../../atoms/Button';
 import { Logo } from '../../atoms/Logo';
@@ -207,7 +208,10 @@ export const Home: React.FC = () => {
 
           {/* Trending Sidebar */}
           <div className="lg:col-span-2">
-            <TrendingSection />
+            <TrendingSectionWithFilter 
+              showFilter={true}
+              limit={5}
+            />
           </div>
         </div>
       </div>
@@ -224,16 +228,12 @@ export const Home: React.FC = () => {
       {/* Regular Ad Section (728x90) */}
       <AdSection position="bottom" size="regular" />
 
-                        {/* Category News Sections */}
-                  <CategoryNewsSection category="Entertainment" />
-                  <CategoryNewsSection category="Tekno & Sains" />
-                  <CategoryNewsSection category="Bisnis" />
-
-                  {/* Main Ad Section (970x250) */}
-                  <AdSection position="bottom" size="header" />
-
-                  {/* Additional Category News Section */}
-                  <CategoryNewsSection category="Bola & Sports" />
-                </>
-              );
-            };
+      {/* Dynamic Category Sections - Auto-generated from database */}
+      <DynamicCategorySections 
+        minPostCount={2}
+        maxSections={10}
+        excludeCategories={[]} // Can exclude categories if needed
+      />
+    </>
+  );
+};

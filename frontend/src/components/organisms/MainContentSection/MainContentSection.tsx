@@ -1,5 +1,7 @@
 import React from 'react';
 import { Carousel } from '../../molecules/Carousel';
+import { useContent } from '../../../hooks/useContent';
+import type { Article } from '../../../services/api/articles';
 
 interface CarouselArticle {
   id: string;
@@ -20,7 +22,37 @@ export const MainContentSection: React.FC<MainContentSectionProps> = ({
   articles = [],
   className = ''
 }) => {
-  // Dummy data untuk carousel
+  // Fetch data dari API
+  const { data: apiArticles, loading, error } = useContent({
+    limit: 6,
+    type: 'post' // Hanya ambil artikel, bukan video
+  });
+
+  // Helper function untuk convert API data ke format CarouselArticle
+  const convertToCarouselArticle = (article: Article, index: number): CarouselArticle => {
+    const timeAgo = new Date(article.date).toLocaleString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit'
+    });
+
+    const result = {
+      id: article.id,
+      title: article.title,
+      source: article.author?.display_name || 'naramaknaNEWS',
+      timeAgo,
+      imageSrc: article.metadata?.thumbnail_url || article.metadata?._thumbnail_url,
+      href: `/artikel/${article.slug}`,
+      isFeatured: index === 0 // First article is featured
+    };
+    
+    // Image debug removed - production ready
+    
+    return result;
+  };
+
+  // Dummy data untuk fallback ketika loading atau error
   const defaultArticles: CarouselArticle[] = [
     {
       id: '1',
@@ -55,7 +87,46 @@ export const MainContentSection: React.FC<MainContentSectionProps> = ({
     }
   ];
 
-  const displayArticles = articles.length > 0 ? articles : defaultArticles;
+  // Prioritas: props articles > API data > fallback data
+  let displayArticles: CarouselArticle[] = [];
+  
+  // Debug removed - production ready
+  
+  if (articles.length > 0) {
+    displayArticles = articles;
+  } else if (!loading && !error && apiArticles.length > 0) {
+    displayArticles = apiArticles.map(convertToCarouselArticle);
+  } else {
+    displayArticles = defaultArticles;
+  }
+
+  // Loading state
+  if (loading && articles.length === 0) {
+    return (
+      <div className={`h-full flex flex-col ${className}`}>
+        <div className="flex-1 mb-6">
+          <div className="animate-pulse">
+            <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
+          </div>
+        </div>
+        <div className="hidden md:grid md:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state (tetap tampilkan fallback data)
+  if (error && articles.length === 0) {
+    console.warn('MainContentSection API Error:', error);
+    // Tetap lanjutkan dengan fallback data, jangan tampilkan error ke user
+  }
 
   return (
     <div className={`h-full flex flex-col ${className}`}>
