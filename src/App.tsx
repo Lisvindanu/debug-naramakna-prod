@@ -1,5 +1,4 @@
 // src/App.tsx
-import React from 'react';
 import HomePage from './components/pages/HomePage';
 import './App.css';
 
