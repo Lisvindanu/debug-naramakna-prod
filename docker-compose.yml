@@ -1,0 +1,60 @@
+# Docker Compose untuk development environment (macOS Compatible)
+# Menjalankan MySQL dan Redis untuk development
+# 
+# macOS Usage:
+# brew install docker docker-compose (or Docker Desktop)
+# docker-compose up -d
+
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: naramakna_mysql
+    platform: linux/amd64  # For Apple Silicon compatibility
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: naramakna_portal
+      MYSQL_USER: naramakna_user
+      MYSQL_PASSWORD: naramakna_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - naramakna_network
+    command: --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7-alpine
+    container_name: naramakna_redis
+    platform: linux/amd64  # For Apple Silicon compatibility
+    ports:
+      - "6379:6379"
+    networks:
+      - naramakna_network
+
+  # Optional: phpMyAdmin for database management
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: naramakna_phpmyadmin
+    platform: linux/amd64
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: naramakna_user
+      PMA_PASSWORD: naramakna_pass
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - naramakna_network
+
+volumes:
+  mysql_data:
+
+networks:
+  naramakna_network:
+    driver: bridge
