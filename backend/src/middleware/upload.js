@@ -63,10 +63,22 @@ const uploadSingle = upload.single('image');
 const uploadMultiple = upload.array('images', 10);
 
 // Middleware for post with images
-const uploadPostImages = upload.fields([
-  { name: 'featured_image', maxCount: 1 },
-  { name: 'gallery_images', maxCount: 10 }
-]);
+const uploadPostImages = (req, res, next) => {
+  console.log('🔍 Upload middleware - req.user BEFORE:', req.user ? 'Present' : 'Missing');
+  
+  const uploadHandler = upload.fields([
+    { name: 'featured_image', maxCount: 1 },
+    { name: 'gallery_images', maxCount: 10 }
+  ]);
+  
+  uploadHandler(req, res, (err) => {
+    console.log('🔍 Upload middleware - req.user AFTER:', req.user ? 'Present' : 'Missing');
+    if (err) {
+      return next(err);
+    }
+    next();
+  });
+};
 
 // Error handling middleware
 const handleUploadError = (error, req, res, next) => {
