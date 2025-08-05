@@ -10,8 +10,8 @@ export interface LogoProps {
 
 export const Logo: React.FC<LogoProps> = ({
   className = '',
-  width = 140,
-  height = 45,
+  width = 180,
+  height = 60,
   alt = 'Naramakna Logo',
 }) => {
   return (

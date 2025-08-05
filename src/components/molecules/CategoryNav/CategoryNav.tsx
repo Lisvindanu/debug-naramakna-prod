@@ -18,7 +18,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
   className = '',
 }) => {
   const getVariantClasses = (variant: string = 'default', active: boolean = false) => {
-    const baseClasses = 'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors hover:bg-gray-100';
+    const baseClasses = 'px-4 py-2 text-sm font-medium rounded-lg transition-colors hover:bg-gray-100 text-center whitespace-nowrap flex-shrink-0';
     
     const variantClasses = {
       default: active 
@@ -32,7 +32,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
   };
 
   return (
-    <div className={`flex items-center space-x-4 overflow-x-auto ${className}`}>
+    <div className={`flex items-center gap-2 overflow-x-auto scrollbar-hide ${className}`}>
       {items.map((item) => (
         <a
           key={item.label}

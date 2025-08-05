@@ -1,6 +1,6 @@
 // src/components/organisms/Header/Header.tsx
 import React, { useState } from 'react';
-import { Home, Moon, Sun, Bell, Menu, X } from 'lucide-react';
+import { Home, Bell, Menu, X } from 'lucide-react';
 import { Logo } from '../../ui/Logo';
 import { Button } from '../../ui/Button';
 import { IconButton } from '../../ui/IconButton';
@@ -11,12 +11,7 @@ export interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ className = '' }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -29,11 +24,11 @@ export const Header: React.FC<HeaderProps> = ({ className = '' }) => {
 
   return (
     <header className={`bg-white border-b border-gray-200 w-full ${className}`}>
-      <div className="max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 xs:h-16 lg:h-18 xl:h-20">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Logo width={140} height={45} className="xs:w-36 lg:w-40 xl:w-44 2xl:w-48 3xl:w-52" />
+            <Logo width={180} height={60} className="xs:w-44 lg:w-48 xl:w-52 2xl:w-56 3xl:w-60" />
           </div>
 
           {/* Search Bar - Responsive */}
@@ -50,10 +45,6 @@ export const Header: React.FC<HeaderProps> = ({ className = '' }) => {
             <div className="hidden md:flex items-center space-x-2 lg:space-x-3 xl:space-x-4">
               <IconButton aria-label="Home" variant="ghost" className="p-2 lg:p-2.5 hover:bg-gray-100">
                 <Home size={20} className="lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-gray-600" />
-              </IconButton>
-              
-              <IconButton onClick={toggleDarkMode} aria-label="Toggle dark mode" variant="ghost" className="p-2 lg:p-2.5 hover:bg-gray-100">
-                {isDarkMode ? <Sun size={20} className="lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-gray-600" /> : <Moon size={20} className="lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-gray-600" />}
               </IconButton>
               
               <IconButton aria-label="Notifications" variant="ghost" className="p-2 lg:p-2.5 hover:bg-gray-100">
@@ -95,10 +86,6 @@ export const Header: React.FC<HeaderProps> = ({ className = '' }) => {
                 <div className="flex items-center space-x-4">
                   <IconButton aria-label="Home" variant="ghost" className="p-2 hover:bg-gray-100">
                     <Home size={20} className="text-gray-600" />
-                  </IconButton>
-                  
-                  <IconButton onClick={toggleDarkMode} aria-label="Toggle dark mode" variant="ghost" className="p-2 hover:bg-gray-100">
-                    {isDarkMode ? <Sun size={20} className="text-gray-600" /> : <Moon size={20} className="text-gray-600" />}
                   </IconButton>
                   
                   <IconButton aria-label="Notifications" variant="ghost" className="p-2 hover:bg-gray-100">

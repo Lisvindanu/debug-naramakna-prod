@@ -8,103 +8,18 @@ export interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ className = '' }) => {
-  // Data kategori utama seperti Kumparan
+  // Data kategori utama dengan dropdown untuk "Lainnya"
   const mainNavItems: NavItem[] = [
-    { 
-      label: 'News', 
-      href: '/news',
-      dropdown: [
-        { label: 'Politik', href: '/news/politik' },
-        { label: 'Hukum', href: '/news/hukum' },
-        { label: 'Ekonomi', href: '/news/ekonomi' },
-        { label: 'Metro', href: '/news/metro' },
-        { label: 'Internasional', href: '/news/internasional' },
-      ]
-    },
-    { 
-      label: 'Entertainment', 
-      href: '/entertainment',
-      dropdown: [
-        { label: 'Musik', href: '/entertainment/musik' },
-        { label: 'Film', href: '/entertainment/film' },
-        { label: 'Celebrity', href: '/entertainment/celebrity' },
-        { label: 'TV', href: '/entertainment/tv' },
-      ]
-    },
-    { 
-      label: 'Tekno & Sains', 
-      href: '/tekno',
-      dropdown: [
-        { label: 'Teknologi', href: '/tekno/teknologi' },
-        { label: 'Sains', href: '/tekno/sains' },
-        { label: 'Gadget', href: '/tekno/gadget' },
-        { label: 'Internet', href: '/tekno/internet' },
-      ]
-    },
-    { 
-      label: 'Bisnis', 
-      href: '/bisnis',
-      dropdown: [
-        { label: 'Startup', href: '/bisnis/startup' },
-        { label: 'Investasi', href: '/bisnis/investasi' },
-        { label: 'UMKM', href: '/bisnis/umkm' },
-        { label: 'Keuangan', href: '/bisnis/keuangan' },
-      ]
-    },
-    { 
-      label: 'Bola & Sports', 
-      href: '/sports',
-      dropdown: [
-        { label: 'Sepak Bola', href: '/sports/sepakbola' },
-        { label: 'Basket', href: '/sports/basket' },
-        { label: 'Badminton', href: '/sports/badminton' },
-        { label: 'MotoGP', href: '/sports/motogp' },
-      ]
-    },
-    { 
-      label: 'Otomotif', 
-      href: '/otomotif',
-      dropdown: [
-        { label: 'Mobil', href: '/otomotif/mobil' },
-        { label: 'Motor', href: '/otomotif/motor' },
-        { label: 'Modifikasi', href: '/otomotif/modifikasi' },
-        { label: 'Tips', href: '/otomotif/tips' },
-      ]
-    },
-    { 
-      label: 'Woman', 
-      href: '/woman',
-      dropdown: [
-        { label: 'Fashion', href: '/woman/fashion' },
-        { label: 'Beauty', href: '/woman/beauty' },
-        { label: 'Health', href: '/woman/health' },
-        { label: 'Relationship', href: '/woman/relationship' },
-      ]
-    },
-    { 
-      label: 'Food & Travel', 
-      href: '/food-travel',
-      dropdown: [
-        { label: 'Kuliner', href: '/food-travel/kuliner' },
-        { label: 'Resep', href: '/food-travel/resep' },
-        { label: 'Wisata', href: '/food-travel/wisata' },
-        { label: 'Hotel', href: '/food-travel/hotel' },
-      ]
-    },
-    { 
-      label: 'Mom', 
-      href: '/mom',
-      dropdown: [
-        { label: 'Parenting', href: '/mom/parenting' },
-        { label: 'Kehamilan', href: '/mom/kehamilan' },
-        { label: 'Anak', href: '/mom/anak' },
-        { label: 'Keluarga', href: '/mom/keluarga' },
-      ]
-    },
-    { 
-      label: 'Bolanita', 
-      href: '/bolanita' 
-    },
+    { label: 'News', href: '/news' },
+    { label: 'Entertainment', href: '/entertainment' },
+    { label: 'Tekno & Sains', href: '/tekno' },
+    { label: 'Bisnis', href: '/bisnis' },
+    { label: 'Bola & Sports', href: '/sports' },
+    { label: 'Otomotif', href: '/otomotif' },
+    { label: 'Woman', href: '/woman' },
+    { label: 'Food & Travel', href: '/food-travel' },
+    { label: 'Mom', href: '/mom' },
+    { label: 'Bolanita', href: '/bolanita' },
     { 
       label: 'Lainnya', 
       href: '/lainnya',
@@ -114,6 +29,9 @@ export const Navbar: React.FC<NavbarProps> = ({ className = '' }) => {
         { label: 'Kesehatan', href: '/lainnya/kesehatan' },
         { label: 'Agama', href: '/lainnya/agama' },
         { label: 'Hobi', href: '/lainnya/hobi' },
+        { label: 'Kuliner', href: '/lainnya/kuliner' },
+        { label: 'Otomotif Klasik', href: '/lainnya/otomotif-klasik' },
+        { label: 'Properti', href: '/lainnya/properti' },
       ]
     },
   ];
@@ -131,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className = '' }) => {
 
   return (
     <nav className={`bg-white border-b border-gray-200 w-full ${className}`}>
-      <div className="max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Navigation - Responsive */}
         <div className="hidden lg:block py-2 xl:py-3 2xl:py-4 border-b border-gray-100">
           <NavigationMenu items={mainNavItems} className="justify-center xl:justify-start 2xl:space-x-8 3xl:space-x-12" />
@@ -144,29 +62,15 @@ export const Navbar: React.FC<NavbarProps> = ({ className = '' }) => {
 
         {/* Mobile Navigation Menu */}
         <div className="lg:hidden border-t border-gray-100 py-4">
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
             {mainNavItems.map((item) => (
-              <div key={item.label}>
-                <a
-                  href={item.href}
-                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[#db9942] hover:bg-gray-50 rounded-md"
-                >
-                  {item.label}
-                </a>
-                {item.dropdown && (
-                  <div className="ml-4 mt-2 space-y-1">
-                    {item.dropdown.map((subItem) => (
-                      <a
-                        key={subItem.label}
-                        href={subItem.href}
-                        className="block px-3 py-1 text-sm text-gray-600 hover:text-[#db9942] hover:bg-gray-50 rounded-md"
-                      >
-                        {subItem.label}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <a
+                key={item.label}
+                href={item.href}
+                className="block px-3 py-2 text-sm font-medium text-gray-700 hover:text-[#db9942] hover:bg-gray-50 rounded-md text-center"
+              >
+                {item.label}
+              </a>
             ))}
           </div>
         </div>
