@@ -1,7 +1,7 @@
 // src/components/blocks/NavigationBlock/index.tsx
 import React from 'react';
 import { X } from 'lucide-react';
-import NavLink from '../../ui/NavLink';
+import { NavigationMenu, type NavItem } from '../../molecules/NavigationMenu';
 
 interface NavigationBlockProps {
   isOpen: boolean;
@@ -9,11 +9,11 @@ interface NavigationBlockProps {
 }
 
 const NavigationBlock: React.FC<NavigationBlockProps> = ({ isOpen, onClose }) => {
-  const categories = [
+  const categories: NavItem[] = [
     { 
       label: 'News', 
       href: '#news',
-      dropdownItems: [
+      dropdown: [
         { label: 'Breaking News', href: '#breaking' },
         { label: 'Politik', href: '#politik' },
         { label: 'Ekonomi', href: '#ekonomi' },
@@ -23,7 +23,7 @@ const NavigationBlock: React.FC<NavigationBlockProps> = ({ isOpen, onClose }) =>
     { 
       label: 'Entertainment', 
       href: '#entertainment',
-      dropdownItems: [
+      dropdown: [
         { label: 'Musik', href: '#musik' },
         { label: 'Film', href: '#film' },
         { label: 'Selebriti', href: '#selebriti' },
@@ -33,7 +33,7 @@ const NavigationBlock: React.FC<NavigationBlockProps> = ({ isOpen, onClose }) =>
     { 
       label: 'Tekno & Sains', 
       href: '#tekno',
-      dropdownItems: [
+      dropdown: [
         { label: 'Teknologi', href: '#teknologi' },
         { label: 'Sains', href: '#sains' },
         { label: 'Gadget', href: '#gadget' },
@@ -50,8 +50,7 @@ const NavigationBlock: React.FC<NavigationBlockProps> = ({ isOpen, onClose }) =>
     { 
       label: 'Lainnya', 
       href: '#lainnya',
-      hasDropdown: true,
-      dropdownItems: [
+      dropdown: [
         { label: 'Lifestyle', href: '#lifestyle' },
         { label: 'Kesehatan', href: '#kesehatan' },
         { label: 'Pendidikan', href: '#pendidikan' },
@@ -63,18 +62,9 @@ const NavigationBlock: React.FC<NavigationBlockProps> = ({ isOpen, onClose }) =>
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="hidden lg:flex items-center space-x-1">
-        {categories.map((category, index) => (
-          <NavLink 
-            key={index}
-            href={category.href}
-            hasDropdown={category.dropdownItems?.length > 0}
-            dropdownItems={category.dropdownItems || []}
-          >
-            {category.label}
-          </NavLink>
-        ))}
-      </nav>
+      <div className="hidden lg:block">
+        <NavigationMenu items={categories} />
+      </div>
 
       {/* Mobile Navigation Overlay */}
       <div className={`lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity duration-300 ${

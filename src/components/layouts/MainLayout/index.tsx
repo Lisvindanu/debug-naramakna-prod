@@ -10,19 +10,19 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ 
   children, 
-  showFooter = true 
+  showFooter = false // Disable footer by default
 }) => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       {/* Navigation */}
       <NavbarSection />
       
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 bg-white">
         {children}
       </main>
       
-      {/* Footer */}
+      {/* Footer - Disabled for now */}
       {showFooter && <FooterSection />}
     </div>
   );
