@@ -18,8 +18,8 @@ router.get('/type/:type', ContentController.getByType);
 
 // Individual content CRUD
 router.get('/:id', ContentController.getById);
-router.post('/', ContentController.create);
-router.put('/:id', ContentController.update);
-router.delete('/:id', ContentController.delete);
+router.post('/', authenticate, uploadPostImages, handleUploadError, canCreateVideo, ContentController.create);
+router.put('/:id', authenticate, canEditPost, ContentController.update);
+router.delete('/:id', authenticate, canEditPost, ContentController.delete);
 
 module.exports = router;
