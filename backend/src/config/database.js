@@ -1,3 +1,3 @@
-// Konfigurasi koneksi MySQL database
+// Konfigurasi koneksi MySQL database mysql ya
 const dbConfig = {};
 module.exports = dbConfig;
