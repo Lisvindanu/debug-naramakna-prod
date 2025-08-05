@@ -3,7 +3,7 @@
  * Handles all content types: articles, YouTube videos, TikTok videos
  */
 
-const { Post, PostMeta, User, TermTaxonomy, TermRelationship, Analytics } = require('../models');
+const { Post, PostMeta, User, Term, TermTaxonomy, TermRelationship, Analytics, PostViews, sequelize } = require('../models');
 const ContentHelpers = require('../models/ContentHelpers');
 const { Op } = require('sequelize');
 
@@ -52,21 +52,44 @@ class ContentController {
           model: User,
           as: 'author',
           attributes: ['ID', 'display_name', 'user_email']
+        },
+        // Always include categories for display
+        {
+          model: TermRelationship,
+          as: 'termRelationships',
+          attributes: ['object_id', 'term_taxonomy_id'],
+          required: false, // LEFT JOIN
+          include: [{
+            model: TermTaxonomy,
+            as: 'taxonomy',
+            attributes: ['term_taxonomy_id', 'term_id', 'taxonomy', 'description'],
+            where: { taxonomy: { [Op.in]: ['category', 'newstopic'] } },
+            required: false,
+            include: [{
+              model: Term,
+              as: 'term',
+              attributes: ['term_id', 'name', 'slug'],
+              required: false
+            }]
+          }]
         }
       ];
 
       // Filter by category if specified
       if (category) {
-        include.push({
-          model: TermTaxonomy,
-          as: 'categories',
-          where: { taxonomy: 'category' },
-          include: [{
-            model: require('../models/Term'),
-            as: 'term',
-            where: { slug: category }
-          }]
-        });
+        // Use subquery to find posts that belong to the category
+        const categorySubquery = `
+          SELECT tr.object_id 
+          FROM term_relationships tr
+          JOIN term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+          JOIN terms t ON tt.term_id = t.term_id
+          WHERE t.slug = '${category.replace(/'/g, "\\'")}' 
+          AND tt.taxonomy IN ('category', 'newstopic')
+        `;
+        
+        whereClause.ID = {
+          [Op.in]: sequelize.literal(`(${categorySubquery})`)
+        };
       }
 
       const result = await Post.findAndCountAll({
@@ -79,7 +102,9 @@ class ContentController {
       });
 
       // Format response with metadata
-      const formattedPosts = result.rows.map(post => ContentController.formatPostWithMeta(post));
+      const formattedPosts = await Promise.all(
+        result.rows.map(post => ContentController.formatPostWithMeta(post))
+      );
 
       res.json({
         success: true,
@@ -144,7 +169,7 @@ class ContentController {
       // Track view
       await ContentController.trackAnalytics(req, post.ID, post.post_type, 'view');
 
-      const formattedPost = ContentController.formatPostWithMeta(post);
+      const formattedPost = await ContentController.formatPostWithMeta(post);
 
       res.json({
         success: true,
@@ -184,7 +209,9 @@ class ContentController {
         offset: (page - 1) * limit
       });
 
-      const formattedPosts = result.rows.map(post => ContentController.formatPostWithMeta(post));
+      const formattedPosts = await Promise.all(
+        result.rows.map(post => ContentController.formatPostWithMeta(post))
+      );
 
       res.json({
         success: true,
@@ -466,9 +493,269 @@ class ContentController {
   }
 
   /**
+   * Get trending content based on post views
+   * GET /api/content/trending
+   */
+  static async getTrending(req, res) {
+    try {
+      const { 
+        limit = 10, 
+        category = null,
+        type = null,
+        period = null // Optional: filter by specific period (YYYYMMDD)
+      } = req.query;
+
+      // Base query for trending posts
+      let whereClause = {
+        post_status: 'publish'
+      };
+
+      // Filter by content type
+      if (type) {
+        const validTypes = ['post', 'youtube_video', 'tiktok_video', 'page'];
+        if (validTypes.includes(type)) {
+          whereClause.post_type = type;
+        }
+      }
+
+      // Build category filter for raw SQL if needed
+      let categoryFilter = '';
+      if (category) {
+        categoryFilter = `
+          AND p.ID IN (
+            SELECT tr.object_id 
+            FROM term_relationships tr
+            JOIN term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+            JOIN terms t ON tt.term_id = t.term_id
+            WHERE t.slug = '${category.replace(/'/g, "\\'")}' 
+            AND tt.taxonomy IN ('category', 'newstopic')
+          )
+        `;
+      }
+
+      // Use raw SQL for better control over the trending query
+      const trendingPostIds = await sequelize.query(`
+        SELECT p.ID, pv.count as view_count
+        FROM posts p
+        INNER JOIN post_views pv ON p.ID = pv.id
+        WHERE p.post_status = 'publish'
+        ${type ? `AND p.post_type = '${type.replace(/'/g, "\\'")}' ` : ''}
+        ${categoryFilter}
+        ORDER BY pv.count DESC, p.post_date DESC
+        LIMIT ${parseInt(limit)}
+      `, {
+        type: sequelize.QueryTypes.SELECT
+      });
+
+      // If no trending posts found for specific category, fallback to recent posts from that category
+      if (trendingPostIds.length === 0 && category) {
+        console.log(`No trending posts found for category '${category}', falling back to recent posts`);
+        
+        const fallbackQuery = {
+          where: {
+            post_status: 'publish',
+            ...(type && { post_type: type }),
+            ID: {
+              [Op.in]: sequelize.literal(`(
+                SELECT tr.object_id 
+                FROM term_relationships tr
+                JOIN term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                JOIN terms t ON tt.term_id = t.term_id
+                WHERE t.slug = '${category.replace(/'/g, "\\'")}' 
+                AND tt.taxonomy IN ('category', 'newstopic')
+              )`)
+            }
+          },
+          include: [
+            { model: PostMeta, as: 'meta' },
+            { model: User, as: 'author', attributes: ['ID', 'display_name', 'user_email'] },
+            {
+              model: TermRelationship,
+              as: 'termRelationships',
+              attributes: ['object_id', 'term_taxonomy_id'],
+              required: false,
+              include: [{
+                model: TermTaxonomy,
+                as: 'taxonomy',
+                attributes: ['term_taxonomy_id', 'term_id', 'taxonomy', 'description'],
+                where: { taxonomy: { [Op.in]: ['category', 'newstopic'] } },
+                required: false,
+                include: [{
+                  model: Term,
+                  as: 'term',
+                  attributes: ['term_id', 'name', 'slug'],
+                  required: false
+                }]
+              }]
+            }
+          ],
+          order: [['post_date', 'DESC']],
+          limit: parseInt(limit)
+        };
+
+        const fallbackResult = await Post.findAll(fallbackQuery);
+        const formattedPosts = await Promise.all(
+          fallbackResult.map(post => ContentController.formatPostWithMeta(post))
+        );
+
+        // Add viewCount: 0 for consistency
+        const fallbackPosts = formattedPosts.map(post => ({
+          ...post,
+          viewCount: 0
+        }));
+
+        return res.json({
+          success: true,
+          data: {
+            posts: fallbackPosts,
+            totalItems: fallbackPosts.length,
+            criteria: 'most_recent' // Different criteria to indicate fallback
+          }
+        });
+      }
+
+      if (trendingPostIds.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            posts: [],
+            totalItems: 0,
+            criteria: 'most_viewed'
+          }
+        });
+      }
+
+      const postIds = trendingPostIds.map(item => item.ID);
+
+      // Build the detailed query for the trending post IDs
+      const trendingQuery = {
+        include: [
+          {
+            model: PostMeta,
+            as: 'meta'
+          },
+          {
+            model: User,
+            as: 'author',
+            attributes: ['ID', 'display_name', 'user_email']
+          },
+          // Always include categories for display
+          {
+            model: TermRelationship,
+            as: 'termRelationships',
+            attributes: ['object_id', 'term_taxonomy_id'],
+            required: false,
+            include: [{
+              model: TermTaxonomy,
+              as: 'taxonomy',
+              attributes: ['term_taxonomy_id', 'term_id', 'taxonomy', 'description'],
+              where: { taxonomy: { [Op.in]: ['category', 'newstopic'] } },
+              required: false,
+              include: [{
+                model: Term,
+                as: 'term',
+                attributes: ['term_id', 'name', 'slug'],
+                required: false
+              }]
+            }]
+          }
+        ],
+        where: {
+          ...whereClause,
+          ID: { [Op.in]: postIds }
+        },
+        order: [
+          sequelize.literal(`FIELD(Post.ID, ${postIds.join(',')})`),
+        ]
+      };
+
+      const result = await Post.findAll(trendingQuery);
+
+      // Format response with metadata
+      const formattedPosts = await Promise.all(
+        result.map(post => ContentController.formatPostWithMeta(post))
+      );
+
+      // Sort posts by trending order and add view counts
+      const trendingPosts = trendingPostIds.map(trendingItem => {
+        const post = formattedPosts.find(p => p.id === trendingItem.ID);
+        return post ? {
+          ...post,
+          viewCount: trendingItem.view_count
+        } : null;
+      }).filter(Boolean); // Remove any null entries
+
+      res.json({
+        success: true,
+        data: {
+          posts: trendingPosts,
+          totalItems: trendingPosts.length,
+          criteria: 'most_viewed'
+        }
+      });
+
+    } catch (error) {
+      console.error('Error fetching trending content:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch trending content',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Get all categories
+   * GET /api/content/categories
+   */
+  static async getCategories(req, res) {
+    try {
+      const Term = require('../models/Term');
+      
+      const categories = await TermTaxonomy.findAll({
+        where: { 
+          taxonomy: { [Op.in]: ['category', 'newstopic'] }
+        },
+        include: [{
+          model: Term,
+          as: 'term',
+          attributes: ['term_id', 'name', 'slug']
+        }],
+        order: [['count', 'DESC']] // Sort by most used categories
+      });
+
+      const formattedCategories = categories.map(category => ({
+        id: category.term_taxonomy_id,
+        termId: category.term_id,
+        name: category.term?.name || 'Unknown',
+        slug: category.term?.slug || '',
+        description: category.description,
+        count: category.count,
+        parent: category.parent
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          categories: formattedCategories,
+          total: formattedCategories.length
+        }
+      });
+
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch categories',
+        error: error.message
+      });
+    }
+  }
+
+  /**
    * Helper: Format post with metadata
    */
-  static formatPostWithMeta(post) {
+  static async formatPostWithMeta(post) {
     const postData = post.toJSON();
     
     // Convert meta array to object
@@ -476,6 +763,42 @@ class ContentController {
     if (postData.meta) {
       postData.meta.forEach(meta => {
         metadata[meta.meta_key] = meta.meta_value;
+      });
+    }
+
+    // Resolve thumbnail URL from thumbnail ID
+    if (metadata._thumbnail_id) {
+      try {
+        const thumbnailPost = await Post.findByPk(metadata._thumbnail_id, {
+          attributes: ['guid', 'post_title']
+        });
+        
+        if (thumbnailPost && thumbnailPost.guid) {
+          // GUID already contains localhost URL, just use it directly
+          metadata.thumbnail_url = thumbnailPost.guid;
+          metadata._thumbnail_url = thumbnailPost.guid;
+        }
+      } catch (error) {
+        console.warn('Failed to resolve thumbnail:', error.message);
+        // Fallback to placeholder
+        metadata.thumbnail_url = `/uploads/placeholder-${metadata._thumbnail_id}.jpg`;
+        metadata._thumbnail_url = metadata.thumbnail_url;
+      }
+    }
+
+    // Extract categories from termRelationships
+    const categories = [];
+    if (postData.termRelationships) {
+      postData.termRelationships.forEach(relationship => {
+        if (relationship.taxonomy && relationship.taxonomy.term) {
+          categories.push({
+            id: relationship.taxonomy.term_taxonomy_id,
+            termId: relationship.taxonomy.term_id,
+            name: relationship.taxonomy.term.name,
+            slug: relationship.taxonomy.term.slug,
+            taxonomy: relationship.taxonomy.taxonomy
+          });
+        }
       });
     }
 
@@ -490,7 +813,7 @@ class ContentController {
       date: postData.post_date,
       modified: postData.post_modified,
       author: postData.author,
-      categories: postData.categories || [],
+      categories: categories,
       metadata,
       // Content type specific formatting
       ...(postData.post_type === 'youtube_video' && {
