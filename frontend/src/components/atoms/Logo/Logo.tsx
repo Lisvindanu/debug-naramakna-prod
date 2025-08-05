@@ -1,5 +1,5 @@
 import React from 'react';
-import LogoImage from '../../../assets/images/LogoNaramakna.png';
+import LogoImage from '../../../assets/LogoNaramakna.png';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';

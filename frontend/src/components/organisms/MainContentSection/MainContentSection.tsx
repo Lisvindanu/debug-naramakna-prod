@@ -1,0 +1,150 @@
+import React from 'react';
+import { Carousel } from '../../molecules/Carousel';
+
+interface CarouselArticle {
+  id: string;
+  title: string;
+  source: string;
+  timeAgo: string;
+  imageSrc?: string;
+  href?: string;
+  isFeatured?: boolean;
+}
+
+interface MainContentSectionProps {
+  articles?: CarouselArticle[];
+  className?: string;
+}
+
+export const MainContentSection: React.FC<MainContentSectionProps> = ({
+  articles = [],
+  className = ''
+}) => {
+  // Dummy data untuk carousel
+  const defaultArticles: CarouselArticle[] = [
+    {
+      id: '1',
+      title: 'Perjalanan eFishery: Dari Startup Sederhana, Jadi Unicorn lalu Kolaps',
+      source: 'naramaknaNEWS',
+      timeAgo: '31 menit',
+      isFeatured: true
+    },
+    {
+      id: '2',
+      title: '2 ASN Terduga Teroris Ditangkap Densus 88 di Aceh',
+      source: 'naramaknaNEWS',
+      timeAgo: '2 jam'
+    },
+    {
+      id: '3',
+      title: 'Polisi Tangkap Penjual Miras Oplosan yang Tewaskan Penonton Sound Horeg',
+      source: 'naramaknaNEWS',
+      timeAgo: '2 jam'
+    },
+    {
+      id: '4',
+      title: 'Pemerintah Akan Terbitkan Aturan Baru untuk E-commerce',
+      source: 'naramaknaNEWS',
+      timeAgo: '4 jam'
+    },
+    {
+      id: '5',
+      title: 'KRL Gangguan Lagi, Kali Ini Terjadi di Stasiun Manggarai',
+      source: 'naramaknaNEWS',
+      timeAgo: '6 jam'
+    }
+  ];
+
+  const displayArticles = articles.length > 0 ? articles : defaultArticles;
+
+  return (
+    <div className={`h-full flex flex-col ${className}`}>
+      {/* Featured Carousel */}
+      <div className="flex-1 mb-6">
+        <Carousel articles={displayArticles.filter(article => article.isFeatured)} />
+      </div>
+
+      {/* Secondary Content Grid - Hidden on mobile, shown as slider */}
+      <div className="hidden md:grid md:grid-cols-2 gap-6">
+        {displayArticles.filter(article => !article.isFeatured).slice(0, 2).map((article) => (
+          <div key={article.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+            <div className="relative h-48 bg-gray-200">
+              {article.imageSrc ? (
+                <img 
+                  src={article.imageSrc} 
+                  alt={article.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                  <div className="text-gray-500 text-center">
+                    <div className="w-12 h-12 bg-gray-400 rounded-full mx-auto mb-2 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="text-xs">Image</div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                {article.title}
+              </h3>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">{article.source}</span>
+                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm text-gray-500">{article.timeAgo}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile Slider for Secondary Content */}
+      <div className="md:hidden">
+        <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide">
+          {displayArticles.filter(article => !article.isFeatured).slice(0, 3).map((article) => (
+            <div key={article.id} className="flex-shrink-0 w-80 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="relative h-48 bg-gray-200">
+                {article.imageSrc ? (
+                  <img 
+                    src={article.imageSrc} 
+                    alt={article.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <div className="text-gray-500 text-center">
+                      <div className="w-12 h-12 bg-gray-400 rounded-full mx-auto mb-2 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="text-xs">Image</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                  {article.title}
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">{article.source}</span>
+                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm text-gray-500">{article.timeAgo}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}; 

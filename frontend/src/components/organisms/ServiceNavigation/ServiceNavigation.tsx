@@ -14,7 +14,7 @@ const ServiceNavigation: React.FC<ServiceNavigationProps> = ({
     { label: 'Green Initiative', href: '/green-initiative', color: 'text-green-700' },
     { label: 'Video Story', href: '/video-story', color: 'text-blue-600' },
     { label: 'Trending', href: '/trending', color: 'text-orange-600' },
-    { label: 'kumparanPLUS', href: '/kumparan-plus', color: 'text-purple-600' },
+    { label: 'naramaknaPLUS', href: '/naramakna-plus', color: 'text-purple-600' },
     { label: 'Opini & Cerita', href: '/opini-cerita', color: 'text-gray-600' },
   ];
 
