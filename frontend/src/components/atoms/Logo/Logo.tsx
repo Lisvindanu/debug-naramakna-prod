@@ -1,43 +1,42 @@
-// frontend/src/components/atoms/Logo/Logo.tsx
 import React from 'react';
+import LogoImage from '../../../assets/LogoNaramakna.png';
 
-export interface LogoProps {
+interface LogoProps {
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
-  width?: number;
-  height?: number;
-  alt?: string;
+  onClick?: () => void;
 }
 
 export const Logo: React.FC<LogoProps> = ({
+  size = 'md',
   className = '',
-  width = 180,
-  height = 60,
-  alt = 'Naramakna Logo',
+  onClick,
 }) => {
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'sm':
+        return 'h-8 w-auto';
+      case 'md':
+        return 'h-10 w-auto';
+      case 'lg':
+        return 'h-12 w-auto';
+      case 'xl':
+        return 'h-16 w-auto';
+      default:
+        return 'h-10 w-auto';
+    }
+  };
+
   return (
-    <div className={`flex items-center ${className}`}>
-      {/* Logo Image - akan diganti dengan LogoNaramakna.png */}
+    <div 
+      className={`flex items-center cursor-pointer ${className}`}
+      onClick={onClick}
+    >
       <img
-        src="/LogoNaramakna.png"
-        alt={alt}
-        width={width}
-        height={height}
-        className="object-contain"
-        onError={(e) => {
-          // Fallback jika logo belum ada
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-          target.nextElementSibling?.classList.remove('hidden');
-        }}
+        src={LogoImage}
+        alt="Naramakna"
+        className={`${getSizeClasses()} object-contain`}
       />
-      
-      {/* Fallback text logo */}
-      <div className="hidden">
-        <span className="text-2xl font-bold text-black">nara</span>
-        <span className="text-2xl font-bold text-[#19b3a6]">makna</span>
-      </div>
     </div>
   );
 };
-
-export default Logo;

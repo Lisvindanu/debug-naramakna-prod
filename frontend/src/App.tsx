@@ -1,9 +1,13 @@
-// frontend/src/App.tsx
-import HomePage from './components/pages/HomePage';
-import './index.css';
+import React from 'react';
+import { Home } from "./components/pages/Home";
+import "./App.css";
 
 function App() {
-  return <HomePage />;
+  return (
+    <div className="App">
+      <Home />
+    </div>
+  );
 }
 
 export default App;
