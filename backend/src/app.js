@@ -27,6 +27,7 @@ const contentRoutes = require('./routes/content');
 const approvalRoutes = require('./routes/approval');
 const analyticsRoutes = require('./routes/analytics');
 const adsRoutes = require('./routes/ads');
+const tiktokRoutes = require('./routes/tiktok');
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -35,6 +36,7 @@ app.use('/api/content', contentRoutes);
 app.use('/api/approval', approvalRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ads', adsRoutes);
+app.use('/api/tiktok', tiktokRoutes);
 
 // Halaman utama API
 app.get('/api', (req, res) => {
