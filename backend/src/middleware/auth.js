@@ -299,5 +299,8 @@ module.exports = {
   requireAdmin,
   requireSuperAdmin,
   authRateLimit,
-  getTokenFromRequest
+  getTokenFromRequest,
+  // Aliases for consistency
+  requireAuth: authenticate,
+  requireRole: authorize
 };
