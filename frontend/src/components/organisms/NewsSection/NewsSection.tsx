@@ -110,10 +110,10 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2">
+        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2 text-left">
           {item.title}
         </h3>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 text-left">
           <span className="text-xs text-gray-600">{item.source}</span>
           {item.isAd && (
             <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">Ad</span>
@@ -149,32 +149,32 @@ export const NewsSection: React.FC<NewsSectionProps> = ({
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-                     {/* Main News Column (Left) - Single Large Article */}
-           <div className="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-             <div className="relative h-full">
-               {/* Full Image Background - Extends to bottom */}
-               <div className="w-full h-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-                 <div className="text-center">
-                   <span className="text-white text-6xl font-bold">e</span>
-                   <div className="text-white text-sm mt-2">eFishery</div>
-                 </div>
-               </div>
-               
-               {/* Text Overlay */}
-               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6">
-                 <h3 className="text-lg font-semibold text-white mb-3 leading-tight">
-                   Perjalanan eFishery: Dari Startup Sederhana, Jadi Unicorn lalu Kolaps
-                 </h3>
-                 <div className="flex items-center space-x-2 text-sm text-gray-200">
-                   <span>naramaknaNEWS</span>
-                   <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                   </svg>
-                   <span>51 menit</span>
-                 </div>
-               </div>
-             </div>
-           </div>
+          {/* Main News Column (Left) - Single Large Article */}
+          <div className="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="relative h-64 lg:h-full">
+              {/* Full Image Background - Extends to bottom */}
+              <div className="w-full h-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+                <div className="text-center">
+                  <span className="text-white text-6xl font-bold">e</span>
+                  <div className="text-white text-sm mt-2">eFishery</div>
+                </div>
+              </div>
+              
+              {/* Text Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-6">
+                <h3 className="text-lg font-semibold text-white mb-3 leading-tight text-left">
+                  Perjalanan eFishery: Dari Startup Sederhana, Jadi Unicorn lalu Kolaps
+                </h3>
+                <div className="flex items-center space-x-2 text-sm text-gray-200">
+                  <span>naramaknaNEWS</span>
+                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>51 menit</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Middle Column - Trending */}
           <div className="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200">

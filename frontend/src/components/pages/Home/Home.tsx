@@ -10,6 +10,7 @@ import { PollingSection } from '../../organisms/PollingSection';
 import { VideoSection } from '../../organisms/VideoSection';
 import { NewsSection } from '../../organisms/NewsSection';
 import { DynamicCategorySections } from '../../organisms/DynamicCategorySections';
+//import { CategoryNewsSection } from '../../organisms/CategoryNewsSection';
 
 import { SearchInput } from '../../atoms/SearchInput';
 import { Button } from '../../atoms/Button';
@@ -234,6 +235,17 @@ export const Home: React.FC = () => {
         maxSections={10}
         excludeCategories={[]} // Can exclude categories if needed
       />
+
+      {/* Category News Sections */}
+      {/* <CategoryNewsSection category="Entertainment" />
+      <CategoryNewsSection category="Tekno & Sains" />
+      <CategoryNewsSection category="Bisnis" /> */}
+
+      {/* Main Ad Section (970x250) */}
+      {/* <AdSection position="bottom" size="header" /> */}
+
+      {/* Additional Category News Section */}
+      {/* <CategoryNewsSection category="Bola & Sports" /> */}
     </>
   );
 };
