@@ -13,7 +13,6 @@ interface AdSectionProps {
 
 export const AdSection: React.FC<AdSectionProps> = ({
   className = '',
-  position = 'top',
   imageSrc,
   altText,
   href,
