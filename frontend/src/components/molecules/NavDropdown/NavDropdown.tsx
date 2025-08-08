@@ -85,7 +85,7 @@ export const NavDropdown: React.FC<NavDropdownProps> = ({
           
           {/* Dropdown positioned below NavKategori */}
           <div 
-            className="fixed z-40 bg-white shadow-2xl border border-naramakna-gray-200 w-full"
+            className="fixed z-40 bg-white shadow-2xl border border-gray-200 w-full"
             style={{ 
               top: '120px', // Below NavHeader + NavKategori
               left: 0,
@@ -98,66 +98,58 @@ export const NavDropdown: React.FC<NavDropdownProps> = ({
               <div className="grid grid-cols-3 gap-8">
                 
                 {/* Left Column - Icons and Features */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-naramakna-gray-900 mb-4">Fitur Utama</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Fitur Unggulan</h3>
+                  <div className="space-y-3">
                     {items.map((item, index) => (
                       <div
                         key={index}
-                        className="flex flex-col items-start text-start p-3 rounded-lg hover:bg-naramakna-gray-100 cursor-pointer transition-colors duration-200"
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200"
                         onClick={() => handleItemClick(item)}
                       >
-                        <div className="w-10 h-10 flex items-center justify-center mb-2">
+                        <div className="flex-shrink-0">
                           {item.icon}
                         </div>
-                        <div className="text-sm font-medium text-naramakna-gray-900">
-                          {item.title}
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{item.title}</div>
+                          {item.description && (
+                            <div className="text-xs text-gray-500">{item.description}</div>
+                          )}
                         </div>
-                        {item.description && (
-                          <div className="text-xs text-naramakna-gray-600 mt-1 text-start">
-                            {item.description}
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Middle Column - Company/Information Links */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-naramakna-gray-900 mb-4">Informasi</h3>
-                  {companyLinks.map((link, index) => (
-                    <a
-                      key={index}
-                      href="#"
-                      className="block text-sm text-naramakna-gray-700 hover:text-naramakna-gold py-1 transition-colors duration-200"
-                    >
-                      {link}
-                    </a>
-                  ))}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Informasi</h3>
+                  <div className="space-y-2">
+                    {companyLinks.map((link, index) => (
+                      <a
+                        key={index}
+                        href="#"
+                        className="block text-sm text-gray-600 hover:text-yellow-500 transition-colors duration-200"
+                      >
+                        {link}
+                      </a>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Right Column - Social Media Links */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-naramakna-gray-900 mb-4">Media Sosial</h3>
-                  {socialMediaLinks.map((link, index) => (
-                    <a
-                      key={index}
-                      href="#"
-                      className="block text-sm text-naramakna-gray-700 hover:text-naramakna-gold py-1 transition-colors duration-200"
-                    >
-                      {link}
-                    </a>
-                  ))}
-                  
-                  {/* Copyright and Version */}
-                  <div className="pt-4 mt-4 border-t border-naramakna-gray-200">
-                    <div className="text-xs text-naramakna-gray-500">
-                      2025 © PT Solusi Komunikasi Terapan
-                    </div>
-                    <div className="text-xs text-naramakna-gray-500 mt-1">
-                      Version 1.0.0
-                    </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Ikuti Kami</h3>
+                  <div className="space-y-2">
+                    {socialMediaLinks.map((link, index) => (
+                      <a
+                        key={index}
+                        href="#"
+                        className="block text-sm text-gray-600 hover:text-yellow-500 transition-colors duration-200"
+                      >
+                        {link}
+                      </a>
+                    ))}
                   </div>
                 </div>
               </div>
