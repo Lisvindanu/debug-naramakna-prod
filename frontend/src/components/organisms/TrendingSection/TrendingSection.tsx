@@ -233,7 +233,7 @@ export const TrendingSection: React.FC<TrendingSectionProps> = ({
 
       {/* Content */}
       <div className="p-4">
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-96 overflow-y-auto scrollbar-hide">
           <TrendingList articles={displayArticles} />
         </div>
       </div>
