@@ -69,7 +69,7 @@ export const DynamicCategorySections: React.FC<DynamicCategorySectionsProps> = (
           
           {/* Insert ad after every 3rd section */}
           {(index + 1) % 3 === 0 && (
-            <AdSection position="middle" size="regular" />
+            <AdSection position="top" size="regular" />
           )}
         </React.Fragment>
       ))}

@@ -139,7 +139,7 @@ export const MainContentSection: React.FC<MainContentSectionProps> = ({
       <div className="hidden md:grid md:grid-cols-2 gap-6">
         {displayArticles.filter(article => !article.isFeatured).slice(0, 2).map((article) => (
           <div key={article.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
-            <div className="relative h-48 bg-gray-200">
+            <div className="relative h-64 bg-gray-200">
               {article.imageSrc ? (
                 <img 
                   src={article.imageSrc} 
@@ -160,10 +160,10 @@ export const MainContentSection: React.FC<MainContentSectionProps> = ({
               )}
             </div>
             <div className="p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 text-left">
                 {article.title}
               </h3>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 text-left">
                 <span className="text-sm text-gray-600">{article.source}</span>
                 <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -180,7 +180,7 @@ export const MainContentSection: React.FC<MainContentSectionProps> = ({
         <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide">
           {displayArticles.filter(article => !article.isFeatured).slice(0, 3).map((article) => (
             <div key={article.id} className="flex-shrink-0 w-80 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="relative h-48 bg-gray-200">
+              <div className="relative h-64 bg-gray-200">
                 {article.imageSrc ? (
                   <img 
                     src={article.imageSrc} 
@@ -201,10 +201,10 @@ export const MainContentSection: React.FC<MainContentSectionProps> = ({
                 )}
               </div>
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 text-left">
                   {article.title}
                 </h3>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 text-left">
                   <span className="text-sm text-gray-600">{article.source}</span>
                   <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
