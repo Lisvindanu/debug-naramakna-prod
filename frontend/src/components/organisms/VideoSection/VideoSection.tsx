@@ -80,6 +80,21 @@ export const VideoSection: React.FC<VideoSectionProps> = ({
     }
   };
 
+  const handlePrev = () => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const itemWidth = 256 + 16; // w-64 + space-x-4
+      const newScrollLeft = Math.max(container.scrollLeft - itemWidth, 0);
+      
+      container.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      });
+      
+      setCurrentIndex(Math.max(currentIndex - 1, 0));
+    }
+  };
+
   return (
     <div className={`bg-gray-50 py-8 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -112,7 +127,20 @@ export const VideoSection: React.FC<VideoSectionProps> = ({
              ))}
            </div>
 
-           {/* Floating Navigation Button - Hidden on mobile */}
+           {/* Left Navigation Button - Hidden on mobile */}
+           <div className="absolute top-1/2 left-4 transform -translate-y-1/2 hidden md:block">
+             <button 
+               onClick={handlePrev}
+               disabled={currentIndex <= 0}
+               className="w-10 h-10 bg-naramakna-gold text-white rounded-full shadow-lg hover:bg-naramakna-gold/80 transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+               </svg>
+             </button>
+           </div>
+
+           {/* Right Navigation Button - Hidden on mobile */}
            <div className="absolute top-1/2 right-4 transform -translate-y-1/2 hidden md:block">
              <button 
                onClick={handleNext}

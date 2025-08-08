@@ -17,7 +17,7 @@ export const NavService: React.FC<NavServiceProps> = ({ className = '' }) => {
   ];
 
   return (
-    <div className={`bg-naramakna-gray-50 border-b border-naramakna-gray-200 ${className}`}>
+    <div className={`bg-gray-50 border-b border-gray-200 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center space-x-6 h-10 overflow-x-auto scrollbar-hide">
           {services.map((service, index) => (
@@ -31,7 +31,7 @@ export const NavService: React.FC<NavServiceProps> = ({ className = '' }) => {
                   ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                   : service === 'Green Initiative'
                   ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                  : 'text-naramakna-gray-600 hover:text-naramakna-gold hover:bg-white'
+                  : 'text-gray-600 hover:text-yellow-500 hover:bg-white'
               }`}
             >
               {service}
