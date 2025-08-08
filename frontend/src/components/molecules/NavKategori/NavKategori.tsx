@@ -62,14 +62,14 @@ export const NavKategori: React.FC<NavKategoriProps> = ({ className = '' }) => {
   ];
 
   return (
-    <div className={`bg-white border-b border-naramakna-gray-200 ${className}`}>
+    <div className={`bg-white border-b border-gray-200 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center space-x-8 h-12 overflow-x-auto scrollbar-hide">
           {categories.map((category, index) => (
             <a
               key={index}
               href="#"
-              className="text-sm font-medium text-naramakna-gray-700 hover:text-naramakna-gold whitespace-nowrap transition-colors duration-200 flex-shrink-0"
+              className="text-sm font-medium text-gray-700 hover:text-yellow-500 whitespace-nowrap transition-colors duration-200 flex-shrink-0"
             >
               {category}
             </a>
@@ -78,7 +78,7 @@ export const NavKategori: React.FC<NavKategoriProps> = ({ className = '' }) => {
           {/* Dropdown untuk "Lainnya" */}
           <NavDropdown
             trigger={
-              <div className="flex items-center text-sm font-medium text-naramakna-gray-700 hover:text-naramakna-gold whitespace-nowrap transition-colors duration-200">
+              <div className="flex items-center text-sm font-medium text-gray-700 hover:text-yellow-500 whitespace-nowrap transition-colors duration-200">
                 Lainnya 
                 <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
