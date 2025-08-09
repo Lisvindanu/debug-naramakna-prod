@@ -3,6 +3,7 @@ const sequelize = require('../config/database');
 // Import all models
 const User = require('./User');
 const UserMeta = require('./UserMeta');
+const UserProfile = require('./UserProfile');
 const Post = require('./Post');
 const PostMeta = require('./PostMeta');
 const PostViews = require('./PostViews');
@@ -21,6 +22,9 @@ const Analytics = require('./Analytics');
 // User relationships
 User.hasMany(UserMeta, { foreignKey: 'user_id', as: 'meta' });
 UserMeta.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+User.hasOne(UserProfile, { foreignKey: 'user_id', as: 'profile' });
+UserProfile.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 User.hasMany(Post, { foreignKey: 'post_author', as: 'posts' });
 Post.belongsTo(User, { foreignKey: 'post_author', as: 'author' });
@@ -93,6 +97,7 @@ module.exports = {
   sequelize,
   User,
   UserMeta,
+  UserProfile,
   Post,
   PostMeta,
   PostViews,

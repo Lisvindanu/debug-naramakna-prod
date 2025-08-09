@@ -3,7 +3,7 @@
  * Handles all content types: articles, YouTube videos, TikTok videos
  */
 
-const { Post, PostMeta, User, Term, TermTaxonomy, TermRelationship, Analytics, PostViews, sequelize } = require('../models');
+const { Post, PostMeta, User, Term, TermTaxonomy, TermRelationship, Analytics, PostViews, Comment, sequelize } = require('../models');
 const ContentHelpers = require('../models/ContentHelpers');
 const { Op } = require('sequelize');
 
@@ -21,11 +21,18 @@ class ContentController {
         type = null, 
         category = null,
         search = null,
-        status = 'publish'
+        status = 'publish',
+        author = null
       } = req.query;
 
       const offset = (page - 1) * limit;
       const whereClause = { post_status: status };
+
+      // Filter by author ID
+      if (author) {
+        whereClause.post_author = parseInt(author);
+        console.log('📍 Filtering by author:', parseInt(author), 'whereClause:', whereClause);
+      }
 
       // Filter by content type
       if (type) {
@@ -92,6 +99,8 @@ class ContentController {
         };
       }
 
+      console.log('📊 Final whereClause:', JSON.stringify(whereClause, null, 2));
+      
       const result = await Post.findAndCountAll({
         where: whereClause,
         include,
@@ -853,6 +862,199 @@ class ContentController {
   }
 
   /**
+   * Get posts with view counts and filtering support
+   * GET /api/content/posts-with-views
+   * Query params: page, limit, author, status, year, month, minViews, maxViews, sortBy, sortOrder
+   */
+  static async getPostsWithViews(req, res) {
+    try {
+      const { 
+        page = 1, 
+        limit = 50, 
+        author, 
+        status, 
+        year, 
+        month, 
+        minViews, 
+        maxViews, 
+        sortBy = 'date', 
+        sortOrder = 'DESC' 
+      } = req.query;
+      
+      const offset = (page - 1) * limit;
+
+      // Build WHERE conditions
+      let whereConditions = ["p.post_type = 'post'"];
+      let havingConditions = [];
+      let replacements = { limit: parseInt(limit), offset };
+
+      // Author filter
+      if (author) {
+        whereConditions.push("(u.user_login LIKE :author OR u.display_name LIKE :author)");
+        replacements.author = `%${author}%`;
+      }
+
+      // Status filter
+      if (status) {
+        whereConditions.push("p.post_status = :status");
+        replacements.status = status;
+      }
+
+      // Year filter
+      if (year) {
+        whereConditions.push("YEAR(p.post_date) = :year");
+        replacements.year = parseInt(year);
+      }
+
+      // Month filter (requires year)
+      if (month && year) {
+        whereConditions.push("MONTH(p.post_date) = :month");
+        replacements.month = parseInt(month);
+      }
+
+      // Views filter (applied in HAVING clause since it's after GROUP BY)
+      if (minViews) {
+        havingConditions.push("view_count >= :minViews");
+        replacements.minViews = parseInt(minViews);
+      }
+
+      if (maxViews) {
+        havingConditions.push("view_count <= :maxViews");
+        replacements.maxViews = parseInt(maxViews);
+      }
+
+      // Build ORDER BY clause
+      let orderByClause = '';
+      switch (sortBy) {
+        case 'title':
+          orderByClause = `p.post_title ${sortOrder}`;
+          break;
+        case 'author':
+          orderByClause = `u.display_name ${sortOrder}`;
+          break;
+        case 'status':
+          orderByClause = `p.post_status ${sortOrder}`;
+          break;
+        case 'views':
+          orderByClause = `view_count ${sortOrder}`;
+          break;
+        case 'date':
+        default:
+          orderByClause = `p.post_date ${sortOrder}`;
+          break;
+      }
+
+      // Get posts with view counts from analytics table
+      const postsQuery = `
+        SELECT 
+          p.*,
+          u.display_name as author_display_name,
+          u.user_login as author_login,
+          u.user_email as author_email,
+          COALESCE(a.view_count, 0) as view_count
+        FROM posts p
+        LEFT JOIN users u ON p.post_author = u.ID
+        LEFT JOIN (
+          SELECT 
+            content_id, 
+            COUNT(*) as view_count 
+          FROM analytics 
+          WHERE event_type = 'view' 
+          GROUP BY content_id
+        ) a ON p.ID = a.content_id
+        WHERE ${whereConditions.join(' AND ')}
+        ${havingConditions.length > 0 ? `HAVING ${havingConditions.join(' AND ')}` : ''}
+        ORDER BY ${orderByClause}
+        LIMIT :limit OFFSET :offset
+      `;
+
+      // Also get count query for pagination (without LIMIT/OFFSET)
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM (
+          SELECT 
+            p.ID,
+            COALESCE(a.view_count, 0) as view_count
+          FROM posts p
+          LEFT JOIN users u ON p.post_author = u.ID
+          LEFT JOIN (
+            SELECT 
+              content_id, 
+              COUNT(*) as view_count 
+            FROM analytics 
+            WHERE event_type = 'view' 
+            GROUP BY content_id
+          ) a ON p.ID = a.content_id
+          WHERE ${whereConditions.join(' AND ')}
+          ${havingConditions.length > 0 ? `HAVING ${havingConditions.join(' AND ')}` : ''}
+        ) filtered_posts
+      `;
+
+      const [posts, countResult] = await Promise.all([
+        sequelize.query(postsQuery, {
+          replacements,
+          type: sequelize.QueryTypes.SELECT
+        }),
+        sequelize.query(countQuery, {
+          replacements: Object.fromEntries(Object.entries(replacements).filter(([key]) => key !== 'limit' && key !== 'offset')),
+          type: sequelize.QueryTypes.SELECT
+        })
+      ]);
+
+      // Format posts data
+      const formattedPosts = posts.map(post => ({
+        id: post.ID,
+        title: post.post_title,
+        content: post.post_content,
+        excerpt: post.post_excerpt,
+        status: post.post_status,
+        date: post.post_date,
+        modified: post.post_modified,
+        author: {
+          ID: post.post_author,
+          display_name: post.author_display_name,
+          user_login: post.author_login,
+          user_email: post.author_email
+        },
+        view_count: parseInt(post.view_count) || 0
+      }));
+
+      const total = countResult[0]?.total || 0;
+
+      res.json({
+        success: true,
+        data: {
+          posts: formattedPosts,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(total / limit),
+            totalItems: total,
+            itemsPerPage: parseInt(limit)
+          },
+          filters: {
+            author,
+            status,
+            year,
+            month,
+            minViews,
+            maxViews,
+            sortBy,
+            sortOrder
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error fetching posts with views:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch posts with views',
+        error: error.message
+      });
+    }
+  }
+
+  /**
    * Helper: Track analytics
    */
   static async trackAnalytics(req, contentId, contentType, eventType) {
@@ -868,6 +1070,328 @@ class ContentController {
       });
     } catch (error) {
       console.error('Error tracking analytics:', error);
+    }
+  }
+  /**
+   * Get post by ID for article detail page
+   * GET /api/content/posts/:id
+   */
+  static async getPostById(req, res) {
+    try {
+      const { id } = req.params;
+      
+      const post = await Post.findOne({
+        where: { 
+          ID: id,
+          post_type: 'post',
+          post_status: 'publish'
+        },
+        include: [
+          {
+            model: User,
+            as: 'author',
+            attributes: ['ID', 'user_login', 'user_nicename', 'user_email', 'display_name', 'user_role']
+          },
+          {
+            model: PostMeta,
+            as: 'meta'
+          }
+        ]
+      });
+
+      if (!post) {
+        return res.status(404).json({
+          success: false,
+          message: 'Post not found'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: post
+      });
+    } catch (error) {
+      console.error('Error fetching post by ID:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Get post by slug for SEO-friendly URLs
+   * GET /api/content/posts/slug/:slug
+   */
+  static async getPostBySlug(req, res) {
+    try {
+      const { slug } = req.params;
+      
+      const post = await Post.findOne({
+        where: { 
+          post_name: slug,
+          post_type: 'post',
+          post_status: 'publish'
+        },
+        include: [
+          {
+            model: User,
+            as: 'author',
+            attributes: ['ID', 'user_login', 'user_nicename', 'user_email', 'display_name', 'user_role']
+          },
+          {
+            model: PostMeta,
+            as: 'meta'
+          }
+        ]
+      });
+
+      if (!post) {
+        return res.status(404).json({
+          success: false,
+          message: 'Post not found'
+        });
+      }
+
+      // Process metadata for easier access
+      const metadata = {};
+      if (post.meta) {
+        post.meta.forEach(meta => {
+          metadata[meta.meta_key] = meta.meta_value;
+        });
+      }
+
+      // Get featured image URL if exists
+      let featuredImage = null;
+      if (metadata._thumbnail_id) {
+        const thumbnailPost = await Post.findOne({
+          where: { ID: metadata._thumbnail_id },
+          attributes: ['ID', 'post_title', 'guid']
+        });
+        
+        if (thumbnailPost) {
+          featuredImage = {
+            id: thumbnailPost.ID,
+            url: thumbnailPost.guid,
+            title: thumbnailPost.post_title,
+            caption: thumbnailPost.post_title
+          };
+        }
+      }
+
+      // Prepare response with enhanced data
+      const responseData = {
+        ...post.toJSON(),
+        metadata,
+        featured_image: featuredImage
+      };
+
+      res.status(200).json({
+        success: true,
+        data: responseData
+      });
+    } catch (error) {
+      console.error('Error fetching post by slug:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Get post comments by slug
+   * GET /api/content/posts/slug/:slug/comments
+   */
+  static async getPostCommentsBySlug(req, res) {
+    try {
+      const { slug } = req.params;
+      
+      // First find the post by slug
+      const post = await Post.findOne({
+        where: { 
+          post_name: slug,
+          post_type: 'post',
+          post_status: 'publish'
+        },
+        attributes: ['ID']
+      });
+
+      if (!post) {
+        return res.status(404).json({
+          success: false,
+          message: 'Post not found'
+        });
+      }
+
+      // For now, return empty comments array since we don't have comments table
+      // This can be extended when we implement the comments system
+      res.status(200).json({
+        success: true,
+        data: []
+      });
+    } catch (error) {
+      console.error('Error fetching post comments by slug:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Get posts by author (simplified for profile pages)
+   * GET /api/content/author/:authorId
+   */
+  static async getPostsByAuthor(req, res) {
+    try {
+      const { authorId } = req.params;
+      const { page = 1, limit = 20, status = 'publish' } = req.query;
+      const offset = (page - 1) * limit;
+
+      console.log('📍 Getting posts for author:', authorId);
+
+      const result = await Post.findAndCountAll({
+        where: {
+          post_author: parseInt(authorId),
+          post_status: status,
+          post_type: 'post'
+        },
+        include: [
+          {
+            model: User,
+            as: 'author',
+            attributes: ['ID', 'display_name', 'user_email', 'user_login']
+          }
+        ],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['post_date', 'DESC']]
+      });
+
+      // Format posts
+      const formattedPosts = result.rows.map(post => ({
+        id: post.ID,
+        title: post.post_title,
+        content: post.post_content,
+        excerpt: post.post_excerpt,
+        slug: post.post_name,
+        status: post.post_status,
+        type: post.post_type,
+        date: post.post_date,
+        modified: post.post_modified,
+        author: {
+          ID: post.author.ID,
+          display_name: post.author.display_name,
+          user_email: post.author.user_email,
+          user_login: post.author.user_login
+        }
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          posts: formattedPosts,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(result.count / parseInt(limit)),
+            totalItems: result.count,
+            itemsPerPage: parseInt(limit)
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Get posts by author error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch posts by author'
+      });
+    }
+  }
+
+  /**
+   * Admin: Delete any article
+   * DELETE /api/content/admin/articles/:id
+   */
+  static async adminDeleteArticle(req, res) {
+    const transaction = await sequelize.transaction();
+    
+    try {
+      const { id } = req.params;
+
+      // Check if user is admin or superadmin
+      if (!req.user || (req.user.user_role !== 'admin' && req.user.user_role !== 'superadmin')) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Admin privileges required.'
+        });
+      }
+
+      // Find the article
+      const article = await Post.findOne({
+        where: {
+          ID: id,
+          post_type: 'post'
+        },
+        include: [
+          {
+            model: User,
+            as: 'author',
+            attributes: ['ID', 'display_name', 'user_login']
+          }
+        ]
+      });
+
+      if (!article) {
+        return res.status(404).json({
+          success: false,
+          message: 'Article not found'
+        });
+      }
+
+      // Delete related comments first
+      await Comment.destroy({
+        where: { comment_post_ID: id },
+        transaction
+      });
+
+      // Delete related metadata
+      await PostMeta.destroy({
+        where: { post_id: id },
+        transaction
+      });
+
+      // Delete analytics data
+      await Analytics.destroy({
+        where: { content_id: id },
+        transaction
+      });
+
+      // Delete the article
+      await article.destroy({ transaction });
+
+      await transaction.commit();
+
+      res.json({
+        success: true,
+        message: `Article "${article.post_title}" by ${article.author.display_name} has been deleted.`,
+        data: {
+          deletedArticle: {
+            id: article.ID,
+            title: article.post_title,
+            author: article.author.display_name
+          }
+        }
+      });
+
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Admin delete article error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete article'
+      });
     }
   }
 }

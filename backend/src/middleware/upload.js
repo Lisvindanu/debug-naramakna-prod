@@ -68,7 +68,8 @@ const uploadPostImages = (req, res, next) => {
   
   const uploadHandler = upload.fields([
     { name: 'featured_image', maxCount: 1 },
-    { name: 'gallery_images', maxCount: 10 }
+    { name: 'gallery_images', maxCount: 10 },
+    { name: 'image', maxCount: 1 } // For article editor image uploads
   ]);
   
   uploadHandler(req, res, (err) => {
