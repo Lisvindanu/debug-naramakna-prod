@@ -4,7 +4,7 @@ import { Navbar } from '../../organisms/Navbar';
 import { AdSection } from '../../organisms/AdSection/AdSection';
 import { PollingSection } from '../../organisms/PollingSection/PollingSection';
 import { VideoSection } from '../../organisms/VideoSection/VideoSection';
-import { NewsSection } from '../../organisms/NewsSection/NewsSection';
+
 import { DynamicCategorySections } from '../../organisms/DynamicCategorySections/DynamicCategorySections';
 import { MainContentSection } from '../../organisms/MainContentSection/MainContentSection';
 
@@ -33,9 +33,6 @@ export const Home: React.FC = () => {
 
         {/* Ad Section */}
         <AdSection size='regular'/>
-        
-        {/* News Section */}
-        <NewsSection />
         
         {/* Dynamic Category Sections */}
         <DynamicCategorySections />

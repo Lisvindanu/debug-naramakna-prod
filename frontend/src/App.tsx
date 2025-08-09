@@ -1,6 +1,9 @@
 import React from 'react';
 import SimpleRouter from "./components/Router/SimpleRouter";
+import { AuthProvider } from './contexts/AuthContext';
 import "./App.css";
+import "./styles/article.css";
+import "./styles/editor.css"; // Kumparan editor styles
 
 // Import API debug untuk development
 if (import.meta.env.DEV) {
@@ -139,9 +142,11 @@ const ForgotPasswordPage = () => (
 
 function App() {
   return (
-    <div className="App">
-      <SimpleRouter />
-    </div>
+    <AuthProvider>
+      <div className="App">
+        <SimpleRouter />
+      </div>
+    </AuthProvider>
   );
 }
 

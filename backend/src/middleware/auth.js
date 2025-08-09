@@ -29,11 +29,23 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    if (!user.isActive()) {
-      console.log('🔍 Auth Debug - User inactive');
+    // Allow suspended users to login (they just can't post)
+    // Only block if truly inactive or banned
+    if (user.user_status === 'inactive' || user.user_status === 'banned' || user.isLocked()) {
+      console.log('🔍 Auth Debug - User blocked:', user.user_status);
       return res.status(401).json({
         success: false,
-        message: 'Account is inactive or locked'
+        message: user.user_status === 'banned' ? 'Account is banned' : 
+                user.isLocked() ? 'Account is temporarily locked' : 'Account is inactive'
+      });
+    }
+    
+    // Still require email verification
+    if (!user.email_verified) {
+      console.log('🔍 Auth Debug - Email not verified');
+      return res.status(401).json({
+        success: false,
+        message: 'Please verify your email address'
       });
     }
 
@@ -195,6 +207,11 @@ function getTokenFromRequest(req) {
   }
 
   // Check cookie
+  if (req.cookies && req.cookies.naramakna_auth) {
+    return req.cookies.naramakna_auth;
+  }
+  
+  // Fallback to old cookie name for compatibility
   if (req.cookies && req.cookies.token) {
     return req.cookies.token;
   }
@@ -287,6 +304,21 @@ const authRateLimit = (maxAttempts = 5, windowMs = 15 * 60 * 1000) => {
   };
 };
 
+// Check if user can post content (not suspended)
+const canPost = (req, res, next) => {
+  const user = req.user;
+  
+  if (user.user_status === 'suspended') {
+    return res.status(403).json({
+      success: false,
+      message: 'Your account is suspended. You cannot create or edit content.',
+      user_status: 'suspended'
+    });
+  }
+  
+  next();
+};
+
 module.exports = {
   authenticate,
   optionalAuth,
@@ -300,6 +332,7 @@ module.exports = {
   requireSuperAdmin,
   authRateLimit,
   getTokenFromRequest,
+  canPost,
   // Aliases for consistency
   requireAuth: authenticate,
   requireRole: authorize
