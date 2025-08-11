@@ -12,6 +12,9 @@ import UserDashboard from '../../pages/User/UserDashboard';
 import PostAnalytics from '../../pages/Admin/PostAnalytics';
 import ArticleDetailPage from '../../pages/ArticleDetail/ArticleDetailPage';
 import ArticleWriterPage from '../../pages/Writer/ArticleWriterPage';
+import CategoryPage from '../../pages/Category/CategoryPage';
+
+
 
 const SimpleRouter: React.FC = () => {
   const path = window.location.pathname;
@@ -61,9 +64,16 @@ const SimpleRouter: React.FC = () => {
         const articleSlug = articleSlugMatch[1];
         return <ArticleDetailPage articleSlug={articleSlug} />;
       }
+
+      // Check if it's a category route (/kategori/:slug)
+      const categoryMatch = path.match(/^\/kategori\/([a-zA-Z0-9\-]+)$/);
+      if (categoryMatch) {
+        return <CategoryPage />;
+      }
       
       // Check if it's a username route (/@username or /username)
-      const usernameMatch = path.match(/^\/(@)?([a-zA-Z0-9_]+)$/);
+      // Support both regular usernames and email addresses
+      const usernameMatch = path.match(/^\/(@)?([a-zA-Z0-9_.@-]+)$/);
       if (usernameMatch) {
         const username = usernameMatch[2];
         return <ProfileViewPage username={username} />;

@@ -16,11 +16,30 @@ app.set('trust proxy', true);
 
 // Middleware dasar
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: process.env.CORS_ORIGIN || ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true // Allow cookies for authentication
 }));
-app.use(express.json());
+
+// Increase payload limits for file uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ 
+  limit: '50mb', 
+  extended: true, 
+  parameterLimit: 50000 
+}));
 app.use(cookieParser());
+
+// Set timeout for all requests (30 seconds)
+app.use((req, res, next) => {
+  res.setTimeout(30000, () => {
+    console.log('⏰ Request timeout');
+    res.status(408).json({
+      success: false,
+      message: 'Request timeout'
+    });
+  });
+  next();
+});
 
 // IP and Location tracking middleware
 app.use(ipTracker);
@@ -43,6 +62,9 @@ const tiktokRoutes = require('./routes/tiktok');
 const writerRoutes = require('./routes/writer');
 const commentRoutes = require('./routes/comments');
 const adminRoutes = require('./routes/admin');
+const categoryRoutes = require('./routes/category');
+const pollingRoutes = require('./routes/polling');
+// const taxonomyRoutes = require('./routes/taxonomy'); // TODO: Implement
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -56,6 +78,9 @@ app.use('/api/tiktok', tiktokRoutes);
 app.use('/api/writer', writerRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/category', categoryRoutes);
+app.use('/api/polling', pollingRoutes);
+// app.use('/api/taxonomy', taxonomyRoutes); // TODO: Implement
 
 // Halaman utama API
 app.get('/api', (req, res) => {

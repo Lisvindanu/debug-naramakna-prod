@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
 
       if (response.success && response.data) {
         // Use AuthContext to manage login state
-        login(response.data.user);
+        login(response.data.user, response.data.token);
         
         // Redirect to home
         window.location.href = '/';

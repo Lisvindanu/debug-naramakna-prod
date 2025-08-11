@@ -1,4 +1,5 @@
 const { Post, PostMeta, User, sequelize } = require('../models');
+const { QueryTypes } = require('sequelize');
 const { Op } = require('sequelize');
 const path = require('path');
 
@@ -31,11 +32,19 @@ class WriterController {
 
 
 
-      // Validate required fields
-      if (!title || !content || !description || !summary_social || !channel) {
+      // Validate required fields - relaxed for drafts
+      if (!title || !content || !channel) {
         return res.status(400).json({
           success: false,
-          message: 'Title, content, description, summary social, and channel are required'
+          message: 'Title, content, and channel are required'
+        });
+      }
+      
+      // For published posts, require additional fields
+      if (status === 'published' && (!description || !summary_social)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Description and summary social are required for published posts'
         });
       }
 
@@ -46,6 +55,71 @@ class WriterController {
         .replace(/\s+/g, '-')
         .substring(0, 50);
 
+      // For drafts, check if user already has a draft with the same title
+      // If found, update instead of creating duplicate
+      if (status === 'draft') {
+        const existingDraft = await Post.findOne({
+          where: {
+            post_author: req.user.ID,
+            post_title: title,
+            post_status: 'draft',
+            post_type: 'post'
+          }
+        });
+
+        if (existingDraft) {
+          // Update existing draft instead of creating new one
+          console.log('🔄 Updating existing draft:', existingDraft.ID);
+          
+          await existingDraft.update({
+            post_content: content,
+            post_excerpt: description || '',
+            post_modified: new Date(),
+            post_date_gmt: new Date()
+          });
+
+          // Helper function to update post metadata
+          const updatePostMeta = async (postId, metaKey, metaValue) => {
+            await PostMeta.upsert({
+              post_id: postId,
+              meta_key: metaKey,
+              meta_value: metaValue
+            });
+          };
+
+          // Update metadata
+          if (summary_social) {
+            await updatePostMeta(existingDraft.ID, '_summary_social', summary_social);
+          }
+          if (channel) {
+            await updatePostMeta(existingDraft.ID, '_channel', channel);
+          }
+          if (publish_date) {
+            await updatePostMeta(existingDraft.ID, '_publish_date', publish_date);
+          }
+          if (location) {
+            await updatePostMeta(existingDraft.ID, '_location', location);
+          }
+          if (mark_as_18_plus !== undefined) {
+            await updatePostMeta(existingDraft.ID, '_mark_as_18_plus', mark_as_18_plus ? '1' : '0');
+          }
+          if (featured_image) {
+            await updatePostMeta(existingDraft.ID, '_thumbnail_id', featured_image);
+          }
+
+          return res.status(200).json({
+            success: true,
+            message: 'Draft updated successfully',
+            data: {
+              id: existingDraft.ID,
+              title: existingDraft.post_title,
+              status: existingDraft.post_status,
+              isUpdate: true
+            }
+          });
+        }
+      }
+
       // Create post
       const post = await Post.create({
         post_author: req.user.ID,
@@ -54,7 +128,14 @@ class WriterController {
         post_content: content,
         post_title: title,
         post_excerpt: description,
-        post_status: status === 'published' ? 'publish' : 'draft',
+        post_status: (() => {
+          // Admin and SuperAdmin can publish directly
+          if (req.user.user_role === 'admin' || req.user.user_role === 'superadmin') {
+            return status === 'published' ? 'publish' : 'draft';
+          }
+          // Writers need approval for publishing
+          return status === 'published' ? 'pending' : 'draft';
+        })(), // Role-based publishing
         comment_status: 'closed',
         ping_status: 'closed',
         post_name: slug,
@@ -131,6 +212,9 @@ class WriterController {
 
       await transaction.commit();
 
+      // Auto-add terms from topic, keyword, and channel (outside transaction)
+      await WriterController.addTermsFromPost(post.ID, { channel, topic, keyword });
+
       res.status(201).json({
         success: true,
         message: 'Article created successfully',
@@ -184,13 +268,19 @@ class WriterController {
       // Debug log untuk featured image
       console.log('🔧 Debug Update Article - featured_image:', featured_image);
 
-      // Find article
+      // Find article - Admin and SuperAdmin can edit any post
+      const whereClause = { 
+        ID: id,
+        post_type: 'post'
+      };
+
+      // Only add author restriction for regular writers
+      if (req.user.user_role === 'writer') {
+        whereClause.post_author = req.user.ID;
+      }
+
       const post = await Post.findOne({
-        where: { 
-          ID: id,
-          post_author: req.user.ID,
-          post_type: 'post'
-        }
+        where: whereClause
       });
 
       if (!post) {
@@ -210,13 +300,38 @@ class WriterController {
           .substring(0, 50);
       }
 
+      // Determine new status based on user role and current post status
+      let newStatus;
+      if (req.user.user_role === 'writer') {
+        // Writer logic: published posts go back to pending when edited
+        if (post.post_status === 'publish') {
+          newStatus = 'pending'; // Published posts edited by writer need re-approval
+        } else if (status === 'published') {
+          newStatus = 'pending'; // Writers can't publish directly, goes to pending
+        } else {
+          newStatus = post.post_status; // Keep current status (draft, pending)
+        }
+      } else {
+        // Admin/SuperAdmin can publish directly
+        if (status === 'published') {
+          newStatus = 'publish';
+        } else if (status === 'draft') {
+          newStatus = 'draft';
+        } else if (status === 'pending') {
+          newStatus = 'pending';
+        } else {
+          // Default: keep current status unless explicitly changed
+          newStatus = post.post_status;
+        }
+      }
+
       // Update post
       await post.update({
         post_title: title || post.post_title,
         post_content: content || post.post_content,
         post_excerpt: description || post.post_excerpt,
         post_name: slug,
-        post_status: status === 'published' ? 'publish' : post.post_status,
+        post_status: newStatus,
         post_date: publish_date ? new Date(publish_date) : post.post_date,
         post_modified: new Date(),
         post_modified_gmt: new Date()
@@ -288,6 +403,9 @@ class WriterController {
       }
 
       await transaction.commit();
+
+      // Auto-add/update terms from topic, keyword, and channel (outside transaction)
+      await WriterController.addTermsFromPost(post.ID, { channel, topic, keyword });
 
       res.status(200).json({
         success: true,
@@ -418,12 +536,20 @@ class WriterController {
     try {
       const { id } = req.params;
 
+      // Build where clause based on user role
+      const whereClause = { 
+        ID: id,
+        post_type: 'post'
+      };
+
+      // Only add author restriction for regular writers
+      // Admin and SuperAdmin can access any post
+      if (req.user.user_role === 'writer') {
+        whereClause.post_author = req.user.ID;
+      }
+
       const post = await Post.findOne({
-        where: { 
-          ID: id,
-          post_author: req.user.ID,
-          post_type: 'post'
-        },
+        where: whereClause,
         include: [
           {
             model: PostMeta,
@@ -447,6 +573,17 @@ class WriterController {
         });
       }
 
+      // Get featured image if thumbnail_id exists
+      let featuredImageUrl = '';
+      if (metadata._thumbnail_id) {
+        const thumbnailPost = await Post.findOne({
+          where: { ID: metadata._thumbnail_id, post_type: 'attachment' }
+        });
+        if (thumbnailPost) {
+          featuredImageUrl = thumbnailPost.guid || '';
+        }
+      }
+
       // console.log('🔧 Debug: Found post for edit:', {
       //   ID: post.ID,
       //   title: post.post_title,
@@ -468,12 +605,13 @@ class WriterController {
           modified: post.post_modified,
           author_id: post.post_author,
           publish_date: post.post_date,
-          location: metadata.location || '',
-          channel: metadata.channel || 'news',
-          topic: metadata.topic || '',
-          keyword: metadata.keyword || '',
-          summary_social: metadata.summary_social || '',
-          mark_as_18_plus: metadata.mark_as_18_plus === 'true' || false,
+          location: metadata._location || '',
+          channel: metadata._channel || 'news',
+          topic: metadata._topic || '',
+          keyword: metadata._keyword || '',
+          summary_social: metadata._summary_social || '',
+          mark_as_18_plus: metadata._mark_as_18_plus === '1' || false,
+          featured_image: featuredImageUrl,
           metadata
         }
       });
@@ -575,6 +713,217 @@ class WriterController {
         success: false,
         message: 'Internal server error'
       });
+    }
+  }
+
+  /**
+   * Submit article for review
+   * POST /api/writer/articles/:id/submit
+   */
+  static async submitForReview(req, res) {
+    const transaction = await sequelize.transaction();
+    
+    try {
+      const { id } = req.params;
+      const { submission_notes } = req.body;
+
+      // Find the article
+      const article = await Post.findOne({
+        where: {
+          ID: id,
+          post_author: req.user.ID,
+          post_status: 'draft'
+        },
+        transaction
+      });
+
+      if (!article) {
+        await transaction.rollback();
+        return res.status(404).json({
+          success: false,
+          message: 'Draft article not found or you do not have permission to submit it'
+        });
+      }
+
+      // Update status to pending
+      await article.update({
+        post_status: 'pending',
+        post_modified: new Date()
+      }, { transaction });
+
+      // Add submission metadata
+      await PostMeta.create({
+        post_id: article.ID,
+        meta_key: '_submission_notes',
+        meta_value: JSON.stringify({
+          writer_id: req.user.ID,
+          writer_name: req.user.display_name,
+          submission_date: new Date(),
+          notes: submission_notes || 'Submitted for review'
+        })
+      }, { transaction });
+
+      await transaction.commit();
+
+      res.json({
+        success: true,
+        message: 'Article submitted for review successfully',
+        data: {
+          id: article.ID,
+          title: article.post_title,
+          status: 'pending',
+          submission_date: new Date()
+        }
+      });
+
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Submit for review error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to submit article for review'
+      });
+    }
+  }
+
+  /**
+   * Add terms from post fields (topic, keyword, channel) to database
+   * @param {number} postId - The post ID
+   * @param {object} fields - Object containing channel, topic, keyword
+   */
+  static async addTermsFromPost(postId, { channel, topic, keyword }) {
+    try {
+      console.log(`🏷️ Adding terms from post ${postId}: channel="${channel}", topic="${topic}", keyword="${keyword}"`);
+
+      const termsToAdd = [];
+
+      // Add channel as category
+      if (channel) {
+        termsToAdd.push({ name: channel, taxonomy: 'category' });
+      }
+
+      // Add topic as newstopic
+      if (topic) {
+        termsToAdd.push({ name: topic, taxonomy: 'newstopic' });
+      }
+
+      // Add keywords as tags (split by comma)
+      if (keyword) {
+        const keywords = keyword.split(',').map(k => k.trim()).filter(k => k);
+        keywords.forEach(kw => {
+          termsToAdd.push({ name: kw, taxonomy: 'post_tag' });
+        });
+      }
+
+      const addedTerms = [];
+
+      for (const termData of termsToAdd) {
+        try {
+          // Check if term already exists
+          const existingTermQuery = `
+            SELECT t.term_id, tt.term_taxonomy_id 
+            FROM terms t 
+            JOIN term_taxonomy tt ON t.term_id = tt.term_id 
+            WHERE t.name = ? AND tt.taxonomy = ?
+          `;
+          
+          const existingTerm = await sequelize.query(existingTermQuery, {
+            replacements: [termData.name, termData.taxonomy],
+            type: QueryTypes.SELECT
+          });
+
+          let termTaxonomyId;
+
+          if (existingTerm.length > 0) {
+            // Term exists, use existing term_taxonomy_id
+            termTaxonomyId = existingTerm[0].term_taxonomy_id;
+            console.log(`✅ Using existing term: ${termData.name} (${termData.taxonomy})`);
+          } else {
+            // Create new term
+            const slug = termData.name.toLowerCase()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .replace(/\s+/g, '-');
+
+            // Insert into terms table
+            const insertTermQuery = `
+              INSERT INTO terms (name, slug, term_group) 
+              VALUES (?, ?, 0)
+            `;
+            
+            const termResult = await sequelize.query(insertTermQuery, {
+              replacements: [termData.name, slug],
+              type: QueryTypes.INSERT
+            });
+
+            const termId = termResult[0];
+
+            // Insert into term_taxonomy table
+            const insertTaxonomyQuery = `
+              INSERT INTO term_taxonomy (term_id, taxonomy, description, parent, count) 
+              VALUES (?, ?, '', 0, 0)
+            `;
+            
+            const taxonomyResult = await sequelize.query(insertTaxonomyQuery, {
+              replacements: [termId, termData.taxonomy],
+              type: QueryTypes.INSERT
+            });
+
+            termTaxonomyId = taxonomyResult[0];
+            console.log(`🆕 Created new term: ${termData.name} (${termData.taxonomy})`);
+          }
+
+          // Check if relationship already exists
+          const existingRelQuery = `
+            SELECT * FROM term_relationships 
+            WHERE object_id = ? AND term_taxonomy_id = ?
+          `;
+          
+          const existingRel = await sequelize.query(existingRelQuery, {
+            replacements: [postId, termTaxonomyId],
+            type: QueryTypes.SELECT
+          });
+
+          if (existingRel.length === 0) {
+            // Create term relationship
+            const insertRelQuery = `
+              INSERT INTO term_relationships (object_id, term_taxonomy_id, term_order) 
+              VALUES (?, ?, 0)
+            `;
+            
+            await sequelize.query(insertRelQuery, {
+              replacements: [postId, termTaxonomyId],
+              type: QueryTypes.INSERT
+            });
+
+            // Update count
+            const updateCountQuery = `
+              UPDATE term_taxonomy 
+              SET count = count + 1 
+              WHERE term_taxonomy_id = ?
+            `;
+            
+            await sequelize.query(updateCountQuery, {
+              replacements: [termTaxonomyId],
+              type: QueryTypes.UPDATE
+            });
+
+            addedTerms.push(termData);
+            console.log(`🔗 Linked post ${postId} to term: ${termData.name}`);
+          } else {
+            console.log(`⚠️ Relationship already exists for post ${postId} and term: ${termData.name}`);
+          }
+
+        } catch (termError) {
+          console.error(`❌ Error processing term ${termData.name}:`, termError);
+        }
+      }
+
+      console.log(`✅ Successfully processed ${addedTerms.length} terms for post ${postId}`);
+      return addedTerms;
+
+    } catch (error) {
+      console.error('❌ Error in addTermsFromPost:', error);
+      throw error;
     }
   }
 }

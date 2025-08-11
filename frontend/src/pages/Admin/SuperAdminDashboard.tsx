@@ -5,6 +5,10 @@ import { DashboardTabs } from '../../components/molecules/DashboardTabs';
 import { SystemOverview } from '../../components/organisms/SystemOverview';
 import { PostsManagement } from '../../components/organisms/PostsManagement';
 import { UserManagement } from '../../components/organisms/UserManagement';
+import { AdminAnalytics } from './Analytics';
+import { AdminPolling } from './AdminPolling';
+import { AdminAds } from './AdminAds';
+
 
 interface User {
   ID: number;
@@ -97,6 +101,7 @@ const SuperAdminDashboard: React.FC = () => {
     totalComments: 0
   });
   const [loading, setLoading] = useState(true);
+
   
   // Filtering states
   const [filters, setFilters] = useState({
@@ -147,7 +152,7 @@ const SuperAdminDashboard: React.FC = () => {
             'Content-Type': 'application/json'
           }
         }),
-        fetch('http://localhost:3001/api/content/categories', {
+        fetch('http://localhost:3001/api/content/categories?minCount=0', {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -493,6 +498,9 @@ const SuperAdminDashboard: React.FC = () => {
               { id: 'posts', name: 'Posts Management', count: systemStats.totalPosts },
               { id: 'categories', name: 'Categories Management', count: systemStats.totalCategories },
               { id: 'pending-posts', name: 'Pending Posts', count: pendingPosts.length },
+              { id: 'polling', name: '📊 Polling Management' },
+              { id: 'ads', name: '🎯 Ads Management' },
+              { id: 'analytics', name: 'Analytics & Boost' },
             ]}
             activeTab={activeTab}
             onTabChange={setActiveTab}
@@ -645,16 +653,14 @@ const SuperAdminDashboard: React.FC = () => {
                                 {new Date(post.post_date).toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                <button 
-                                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium"
+                                                                <a
+                                  href={`/tulis?edit=${post.ID}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium inline-block"
                                 >
-                                  Approve
-                                </button>
-                                <button 
-                                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium"
-                                >
-                                  Reject
-                                </button>
+                                  Edit & Review
+                                </a>
                               </td>
                             </tr>
                           ))}
@@ -664,10 +670,30 @@ const SuperAdminDashboard: React.FC = () => {
                   )}
                 </div>
               )}
+
+                        {activeTab === 'polling' && (
+            <div className="p-6">
+              <AdminPolling />
+            </div>
+          )}
+
+          {activeTab === 'ads' && (
+            <div className="p-6">
+              <AdminAds />
+            </div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <div className="p-6">
+              <AdminAnalytics />
+            </div>
+          )}
             </>
           )}
         </div>
       </div>
+
+
     </div>
   );
 };

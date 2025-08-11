@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const User = require('../models/User');
-const { USER_ROLES, POST_STATUS } = require('../../../shared/constants/roles');
+const { USER_ROLES, POST_STATUS } = require('../../../shared/constants/roles.cjs');
 
 class AuthController {
   // Register new user

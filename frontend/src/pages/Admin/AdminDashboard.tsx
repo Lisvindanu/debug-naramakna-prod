@@ -4,6 +4,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { DashboardTabs } from '../../components/molecules/DashboardTabs';
 import { UserManagement } from '../../components/organisms/UserManagement';
 import { DataTable } from '../../components/organisms/DataTable';
+import { AdminPolling } from './AdminPolling';
+import { AdminAds } from './AdminAds';
+
+
 
 interface User {
   ID: number;
@@ -34,6 +38,7 @@ const AdminDashboard: React.FC = () => {
   const [pendingWriters, setPendingWriters] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+
 
   const token = localStorage.getItem('token');
 
@@ -93,26 +98,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const reviewPost = async (postId: number, action: 'approve' | 'reject') => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/approval/${postId}/review`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include',
-        body: JSON.stringify({ action, feedback: `${action}d by admin` })
-      });
 
-      if (response.ok) {
-        fetchData(); // Refresh data
-        alert(`Post ${action}d successfully!`);
-      }
-    } catch (error) {
-      alert('Error reviewing post');
-    }
-  };
 
   // Check if user has admin access
   if (isLoading || loading) {
@@ -179,6 +165,8 @@ const AdminDashboard: React.FC = () => {
                 { id: 'users', name: 'Users', count: users.length },
                 { id: 'pending-writers', name: 'Pending Writers', count: pendingWriters.length },
                 { id: 'pending-posts', name: 'Pending Posts', count: pendingPosts.length },
+                { id: 'polling', name: '📊 Polling Management' },
+                { id: 'ads', name: '🎯 Ads Management' },
               ]}
               activeTab={activeTab}
               onTabChange={setActiveTab}
@@ -329,18 +317,14 @@ const AdminDashboard: React.FC = () => {
                     label: 'Actions',
                     render: (_: any, post: Post) => (
                       <div className="text-sm space-x-2">
-                        <button 
-                          onClick={() => reviewPost(post.ID, 'approve')}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium"
-                        >
-                          Approve
-                        </button>
-                        <button 
-                          onClick={() => reviewPost(post.ID, 'reject')}
-                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium"
-                        >
-                          Reject
-                        </button>
+                                                      <a
+                                href={`/tulis?edit=${post.ID}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium inline-block"
+                              >
+                                Edit & Review
+                              </a>
                       </div>
                     )
                   }
@@ -349,10 +333,26 @@ const AdminDashboard: React.FC = () => {
                 loading={loading}
                 emptyMessage="No posts pending review."
               />
+                        </div>
+          )}
+
+          {activeTab === 'polling' && (
+            <div className="p-6">
+              <AdminPolling />
             </div>
           )}
-        </div>
+
+          {activeTab === 'ads' && (
+            <div className="p-6">
+              <AdminAds />
+            </div>
+          )}
+
+
+    </div>
       </div>
+
+
     </div>
   );
 };

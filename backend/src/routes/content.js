@@ -11,7 +11,10 @@ const { uploadPostImages, handleUploadError } = require('../middleware/upload');
 
 // Content feed and discovery
 router.get('/feed', ContentController.getFeed);
-router.get('/posts', ContentController.getFeed); // alias for frontend compatibility
+router.get('/posts', ContentController.getFeed);
+
+// Search functionality
+router.get('/search/suggestions', ContentController.getSearchSuggestions); // alias for frontend compatibility
 router.get('/trending', ContentController.getTrending);
 router.get('/stats', ContentController.getStats);
 router.get('/posts-with-views', ContentController.getPostsWithViews);

@@ -16,7 +16,7 @@ interface ArticleData {
   publish_date: string;
   location: string;
   mark_as_18_plus: boolean;
-  status: 'draft' | 'published';
+  status: 'draft' | 'published' | 'pending';
   featured_image?: string;
 }
 
@@ -25,8 +25,8 @@ const ArticleWriterPage: React.FC = () => {
   
   // Check if in edit mode
   const urlParams = new URLSearchParams(window.location.search);
-  const editId = urlParams.get('edit');
-  const isEditMode = !!editId;
+  const [editId, setEditId] = useState<string | null>(urlParams.get('edit'));
+  const [isEditMode, setIsEditMode] = useState<boolean>(!!editId);
   
   // Debug: Enable these logs if needed for debugging
   // console.log('🔧 Debug: URL params:', window.location.search);
@@ -50,7 +50,7 @@ const ArticleWriterPage: React.FC = () => {
     featured_image: ''
   });
 
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'error'>('saved');
   const [isLoadingArticle, setIsLoadingArticle] = useState(true); // Always start as loading in edit mode
   const isSavingRef = useRef(false); // Prevent multiple simultaneous saves
   const [charCount, setCharCount] = useState({
@@ -63,8 +63,36 @@ const ArticleWriterPage: React.FC = () => {
   // Featured image state
   const [featuredImagePreview, setFeaturedImagePreview] = useState<string>('');
   const [wordCount, setWordCount] = useState(0);
+  
+  // Popular tags state
+  const [popularTags, setPopularTags] = useState<{
+    popularChannels: any[];
+    popularTags: any[];
+    defaultChannels: string[];
+  }>({
+    popularChannels: [],
+    popularTags: [],
+    defaultChannels: ['News', 'Entertainment', 'Tekno & Sains', 'Bisnis', 'Bola & Sports', 'Otomotif', 'Woman', 'Food & Travel', 'Mom', 'Bolanita']
+  });
 
   const quillRef = useRef<ReactQuill>(null);
+
+  // Fetch popular tags on component mount
+  useEffect(() => {
+    const fetchPopularTags = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/category/popular-tags');
+        if (response.ok) {
+          const data = await response.json();
+          setPopularTags(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch popular tags:', error);
+      }
+    };
+
+    fetchPopularTags();
+  }, []);
 
   // Custom image upload handler
   const imageHandler = useCallback(() => {
@@ -169,13 +197,12 @@ const ArticleWriterPage: React.FC = () => {
 
   // Auto-save function
   const autoSave = useCallback(async () => {
+    console.log('🔧 Debug: Auto-save called with article:', { title: article.title, contentLength: article.content.length });
+    
     if (isSavingRef.current ||
         saveStatus === 'saving' ||
-        !article.title.trim() ||
-        !article.description.trim() ||
-        !article.summary_social.trim() ||
-        !article.channel.trim()) {
-      // console.log('🔧 Debug: Auto-save skipped - validation failed or already saving');
+        !article.title.trim()) {
+      console.log('🔧 Debug: Auto-save skipped - validation failed or already saving');
       return;
     }
 
@@ -225,6 +252,67 @@ const ArticleWriterPage: React.FC = () => {
       isSavingRef.current = false; // Reset saving flag
     }
   }, [article, saveStatus]);
+
+  // Save Draft function
+  const handleSaveDraft = async () => {
+    if (isSavingRef.current) {
+      console.log('🔧 Debug: Save draft skipped - save in progress');
+      return;
+    }
+    
+    try {
+      console.log('🔧 Debug: Save draft called');
+      isSavingRef.current = true;
+      setSaveStatus('saving');
+      
+      const draftData = { ...article, status: 'draft' as const };
+      
+      console.log('🔧 Debug Frontend handleSaveDraft - draftData:', draftData);
+      
+      const url = isEditMode 
+        ? `http://localhost:3001/api/writer/articles/${editId}`
+        : 'http://localhost:3001/api/writer/articles';
+      
+      const response = await fetch(url, {
+        method: isEditMode ? 'PUT' : 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(draftData)
+      });
+
+      console.log('🔧 Debug Frontend handleSaveDraft - response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('🔧 Debug Frontend handleSaveDraft - result:', result);
+        
+        if (isEditMode) {
+          alert('Draft berhasil disimpan!');
+          setArticle(prev => ({ ...prev, status: 'draft' }));
+        } else {
+          alert(`Draft berhasil disimpan! ID: ${result.data.id}`);
+          // Update to edit mode with the new ID
+          setIsEditMode(true);
+          setEditId(result.data.id);
+          setArticle(prev => ({ ...prev, status: 'draft' }));
+        }
+        setSaveStatus('saved');
+      } else {
+        const errorData = await response.text();
+        console.error('🔧 Debug Frontend handleSaveDraft - error response:', response.status, errorData);
+        alert('Gagal menyimpan draft. Silakan coba lagi.');
+        setSaveStatus('error');
+      }
+    } catch (error) {
+      console.error('🔧 Debug Frontend handleSaveDraft - error:', error);
+      alert('Terjadi kesalahan saat menyimpan draft.');
+      setSaveStatus('error');
+    } finally {
+      isSavingRef.current = false;
+    }
+  };
 
   // Publish function
   const handlePublish = async () => {
@@ -397,13 +485,20 @@ const ArticleWriterPage: React.FC = () => {
                 : new Date().toISOString().slice(0, 16),
               location: articleData.location || '',
               mark_as_18_plus: articleData.mark_as_18_plus || false,
-              status: (articleData.status === 'publish' ? 'published' : 'draft') as 'draft' | 'published',
+              status: (articleData.status === 'publish' ? 'published' : articleData.status === 'pending' ? 'pending' : 'draft') as 'draft' | 'published' | 'pending',
               featured_image: articleData.featured_image || ''
             };
             
             // Set featured image preview if exists
             if (articleData.featured_image) {
               setFeaturedImagePreview(articleData.featured_image);
+            }
+            
+            // Check if writer is trying to edit pending post
+            if (user?.user_role === 'writer' && articleData.status === 'pending') {
+              alert('Artikel sedang dalam proses review dan tidak dapat diedit. Silakan tunggu hasil review dari admin.');
+              window.location.href = '/profile';
+              return;
             }
             
             console.log('🔧 Debug: Setting article to:', newArticle);
@@ -464,10 +559,12 @@ const ArticleWriterPage: React.FC = () => {
                 <span className={`px-2 py-1 rounded text-xs ${
                   saveStatus === 'saved' ? 'text-green-600 bg-green-50' :
                   saveStatus === 'saving' ? 'text-yellow-600 bg-yellow-50' :
-                  'text-red-600 bg-red-50'
+                  saveStatus === 'error' ? 'text-red-600 bg-red-50' :
+                  'text-gray-600 bg-gray-50'
                 }`}>
                   {saveStatus === 'saved' ? 'Saved as DRAFT' :
                    saveStatus === 'saving' ? 'Menyimpan...' :
+                   saveStatus === 'error' ? 'Error saat menyimpan' :
                    'Belum disimpan'}
                 </span>
               </div>
@@ -475,7 +572,7 @@ const ArticleWriterPage: React.FC = () => {
             
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => setArticle(prev => ({ ...prev, status: 'draft' }))}
+                onClick={handleSaveDraft}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Simpan Draft
@@ -484,7 +581,14 @@ const ArticleWriterPage: React.FC = () => {
                 onClick={handlePublish}
                 className="px-4 py-2 text-sm font-medium text-white bg-yellow-500 border border-transparent rounded-md hover:bg-yellow-600"
               >
-                Publikasikan
+                {(() => {
+                  // Admin/SuperAdmin editing pending post
+                  if (user && ['admin', 'superadmin'].includes(user.user_role) && isEditMode && article.status === 'pending') {
+                    return `Publikasikan "${article.title.slice(0, 30)}${article.title.length > 30 ? '...' : ''}"`;
+                  }
+                  // Regular publish
+                  return 'Publikasikan';
+                })()}
               </button>
             </div>
           </div>
@@ -516,7 +620,10 @@ const ArticleWriterPage: React.FC = () => {
                 ref={quillRef}
                 theme="snow"
                 value={article.content}
-                onChange={(content) => setArticle(prev => ({ ...prev, content }))}
+                onChange={(content) => {
+                  console.log('🔧 ReactQuill onChange triggered with content:', content);
+                  setArticle(prev => ({ ...prev, content }));
+                }}
                 modules={modules}
                 formats={formats}
                 placeholder="Mulai menulis artikel Anda..."
@@ -597,51 +704,132 @@ const ArticleWriterPage: React.FC = () => {
               )}
             </div>
 
-            {/* Channel */}
+            {/* Channel & Tags */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Channel
+                Channel & Tags
               </label>
-              <select
-                value={article.channel}
-                onChange={(e) => setArticle(prev => ({ ...prev, channel: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-md text-sm bg-white"
-              >
-                <option value="news">News</option>
-                <option value="tech">Tech</option>
-                <option value="lifestyle">Lifestyle</option>
-                <option value="business">Business</option>
-                <option value="sports">Sports</option>
-                <option value="entertainment">Entertainment</option>
-              </select>
-            </div>
+              
+              {/* Popular Channels */}
+              <div className="mb-3">
+                <p className="text-xs text-gray-500 mb-2">Channel Populer:</p>
+                <div className="flex flex-wrap gap-2">
+                  {/* Default channels */}
+                  {popularTags.defaultChannels.map((channel) => (
+                    <button
+                      key={channel}
+                      type="button"
+                      onClick={() => {
+                        const channelTag = channel.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
+                        if (article.channel === channelTag) {
+                          setArticle(prev => ({ ...prev, channel: '' }));
+                        } else {
+                          setArticle(prev => ({ ...prev, channel: channelTag }));
+                        }
+                      }}
+                      className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                        article.channel === channel.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
+                      }`}
+                    >
+                      {channel}
+                    </button>
+                  ))}
+                  
+                  {/* Popular channels from database (first 10) */}
+                  {popularTags.popularChannels.slice(0, 10).map((channel) => (
+                    <button
+                      key={channel.slug}
+                      type="button"
+                      onClick={() => {
+                        if (article.channel === channel.slug) {
+                          setArticle(prev => ({ ...prev, channel: '' }));
+                        } else {
+                          setArticle(prev => ({ ...prev, channel: channel.slug }));
+                        }
+                      }}
+                      className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                        article.channel === channel.slug
+                          ? 'bg-green-500 text-white border-green-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-green-500'
+                      }`}
+                    >
+                      {channel.name} ({channel.count})
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            {/* Topic */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Topic
-              </label>
-              <input
-                type="text"
-                placeholder="Topik artikel..."
-                value={article.topic}
-                onChange={(e) => setArticle(prev => ({ ...prev, topic: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-md text-sm"
-              />
-            </div>
+              {/* Custom Channel Input */}
+              <div className="mb-3">
+                <input
+                  type="text"
+                  placeholder="Atau tulis channel baru..."
+                  value={article.channel}
+                  onChange={(e) => setArticle(prev => ({ ...prev, channel: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
 
-            {/* Keyword */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Keyword
-              </label>
-              <input
-                type="text"
-                placeholder="Kata kunci (pisahkan dengan koma)..."
-                value={article.keyword}
-                onChange={(e) => setArticle(prev => ({ ...prev, keyword: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-md text-sm"
-              />
+              {/* Tags (Topic + Keywords combined) */}
+              <div>
+                <p className="text-xs text-gray-500 mb-2">Tags (topic, keywords, dll):</p>
+                
+                {/* Popular tags suggestions */}
+                {popularTags.popularTags.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-xs text-gray-400 mb-1">Tags populer (klik untuk tambahkan):</p>
+                    <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                      {popularTags.popularTags.slice(0, 20).map((tag) => (
+                        <button
+                          key={tag.slug}
+                          type="button"
+                          onClick={() => {
+                            const currentTags = `${article.topic ? article.topic : ''}${article.topic && article.keyword ? ', ' : ''}${article.keyword ? article.keyword : ''}`;
+                            const newTags = currentTags ? `${currentTags}, ${tag.name}` : tag.name;
+                            
+                            const tags = newTags.split(',').map((t: string) => t.trim()).filter((t: string) => t);
+                            const topic = tags.length > 0 ? tags[0] : '';
+                            const keywords = tags.length > 1 ? tags.slice(1).join(', ') : '';
+                            
+                            setArticle(prev => ({ 
+                              ...prev, 
+                              topic: topic,
+                              keyword: keywords
+                            }));
+                          }}
+                          className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition-colors"
+                        >
+                          {tag.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <textarea
+                  placeholder="Tulis tags dipisahkan dengan koma. Contoh: garut, budaya lokal, pariwisata, kuliner, pendidikan, dll..."
+                  value={`${article.topic ? article.topic : ''}${article.topic && article.keyword ? ', ' : ''}${article.keyword ? article.keyword : ''}`}
+                  onChange={(e) => {
+                    // Split tags and put first one as topic, rest as keywords
+                    const tags = e.target.value.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag);
+                    const topic = tags.length > 0 ? tags[0] : '';
+                    const keywords = tags.length > 1 ? tags.slice(1).join(', ') : '';
+                    
+                    setArticle(prev => ({ 
+                      ...prev, 
+                      topic: topic,
+                      keyword: keywords
+                    }));
+                  }}
+                  rows={3}
+                  className="w-full p-3 border border-gray-300 rounded-md text-sm resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Tag pertama akan jadi topic utama, sisanya jadi keywords
+                </p>
+              </div>
             </div>
 
             {/* Date & Location */}

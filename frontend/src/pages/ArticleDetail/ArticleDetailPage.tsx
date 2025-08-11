@@ -5,6 +5,7 @@ import { ArticleContent } from '../../components/organisms/ArticleContent';
 import { ArticleTags } from '../../components/molecules/ArticleTags';
 import { CommentsSection } from '../../components/organisms/CommentsSection';
 import { RelatedArticles } from '../../components/organisms/RelatedArticles';
+import { AdSection } from '../../components/organisms/AdSection';
 import 'quill/dist/quill.snow.css'; // Import Quill CSS for alignment classes
 
 interface ArticleDetailPageProps {
@@ -341,6 +342,13 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
+      {/* Top Article Ad */}
+      <AdSection 
+        placement="article-top" 
+        size="header" 
+        rotationInterval={8000}
+      />
+      
       <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="p-6 lg:p-8">
@@ -361,6 +369,15 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
               featuredImage={article.featuredImage}
             />
 
+            {/* Mid Article Ad */}
+            <div className="my-8">
+              <AdSection 
+                placement="article-mid" 
+                size="regular" 
+                rotationInterval={10000}
+              />
+            </div>
+
             {/* Article Tags */}
             <ArticleTags tags={article.tags} />
 
@@ -371,8 +388,26 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
           </div>
         </div>
 
+        {/* Before Related Articles Ad */}
+        <div className="my-8">
+          <AdSection 
+            placement="article-bottom" 
+            size="header" 
+            rotationInterval={12000}
+          />
+        </div>
+
         {/* Related Articles */}
         <RelatedArticles articles={relatedArticles} />
+        
+        {/* Final Article Ad */}
+        <div className="mt-8">
+          <AdSection 
+            placement="article-final" 
+            size="regular" 
+            rotationInterval={15000}
+          />
+        </div>
       </main>
     </div>
   );

@@ -20,4 +20,10 @@ router.delete('/articles/:id', ContentController.adminDeleteArticle);
 // Comment Management  
 router.delete('/comments/:id', CommentController.adminDeleteComment);
 
+// Analytics Management
+router.get('/analytics/overview', AdminController.getAnalyticsOverview);
+router.get('/analytics/posts', AdminController.getPostsForBoost);
+router.post('/analytics/boost-views', AdminController.boostViews);
+router.post('/analytics/boost-single', AdminController.boostSinglePost);
+
 module.exports = router;
