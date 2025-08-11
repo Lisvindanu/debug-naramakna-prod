@@ -51,7 +51,10 @@ const upload = multer({
   storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 10 // Maximum 10 files
+    files: 10, // Maximum 10 files
+    fieldSize: 100 * 1024 * 1024, // 100MB for field data
+    fieldNameSize: 1000, // Field name size
+    fields: 1000 // Number of non-file fields
   },
   fileFilter: imageFilter
 });

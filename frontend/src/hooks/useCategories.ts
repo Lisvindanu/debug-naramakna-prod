@@ -19,7 +19,11 @@ export const useCategories = (): UseCategoriesReturn => {
       setLoading(true);
       setError(null);
       
-      const response = await articlesAPI.getCategories();
+      // Get ALL categories for infinite scroll
+      const response = await articlesAPI.getCategories({
+        limit: 10000,   // Very high limit to get all categories
+        minCount: 0     // Include categories with at least 0 posts (reduced from 1)
+      });
       
       if (response.success) {
         setCategories(response.data.categories);

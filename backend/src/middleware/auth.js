@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { USER_ROLES, hasPermission, canAccess } = require('../../../shared/constants/roles');
+const { USER_ROLES, hasPermission, canAccess } = require('../../../shared/constants/roles.cjs');
 
 // Basic authentication middleware
 const authenticate = async (req, res, next) => {
@@ -53,6 +53,8 @@ const authenticate = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.error('🚨 Auth middleware error:', error.message, error.stack);
+    
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
@@ -69,7 +71,8 @@ const authenticate = async (req, res, next) => {
 
     return res.status(500).json({
       success: false,
-      message: 'Authentication error'
+      message: 'Authentication error',
+      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -252,12 +255,12 @@ const canManageAds = (req, res, next) => {
   const user = req.user;
 
   // Only superadmin can manage ads
-  if (user.role !== 'superadmin') {
+  if (user.user_role !== 'superadmin') {
     return res.status(403).json({
       success: false,
       message: 'Only superadmin can manage advertisements',
       required_roles: ['superadmin'],
-      user_role: user.role
+      user_role: user.user_role
     });
   }
 

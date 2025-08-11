@@ -221,7 +221,7 @@ export const TrendingSection: React.FC<TrendingSectionProps> = ({
           </h2>
         </div>
         <a 
-          href="#" 
+          href={category ? `/kategori/${category}` : "#"} 
           className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1 transition-colors duration-200"
         >
           <span>Lihat lainnya</span>

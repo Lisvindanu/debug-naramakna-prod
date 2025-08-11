@@ -186,7 +186,7 @@ export const CategoryNewsSection: React.FC<CategoryNewsSectionProps> = ({
             <h2 className="text-xl font-semibold text-gray-900">{displayCategoryName}</h2>
           </div>
           <a 
-            href="#" 
+            href={`/kategori/${category}`} 
             className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1 transition-colors duration-200"
           >
             <span>Lihat lainnya</span>

@@ -14,6 +14,9 @@ router.delete('/articles/:id', authenticate, requireWriter, canPost, WriterContr
 // Auto-save endpoint
 router.post('/articles/:id/autosave', authenticate, requireWriter, canPost, WriterController.autoSaveArticle);
 
+// Submit for review endpoint
+router.post('/articles/:id/submit', authenticate, requireWriter, canPost, WriterController.submitForReview);
+
 // Image upload endpoint
 router.post('/upload-image', authenticate, requireWriter, canPost, uploadPostImages, handleUploadError, WriterController.uploadImage);
 

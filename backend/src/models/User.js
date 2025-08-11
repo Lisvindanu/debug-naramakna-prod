@@ -199,6 +199,21 @@ User.prototype.toSafeJSON = function() {
   return values;
 };
 
+User.prototype.canEditPost = function(post) {
+  // SuperAdmin dan Admin bisa edit semua post
+  if (this.user_role === 'superadmin' || this.user_role === 'admin') {
+    return true;
+  }
+  
+  // Writer hanya bisa edit post mereka sendiri
+  if (this.user_role === 'writer') {
+    return post.post_author === this.ID;
+  }
+  
+  // User biasa tidak bisa edit post
+  return false;
+};
+
 // Class/Static methods
 User.findByEmailOrLogin = async function(identifier) {
   return await this.findOne({

@@ -2,6 +2,7 @@ import React from 'react';
 import { SocialMediaLinks } from '../../molecules/SocialMediaLinks';
 import { InstagramEmbed } from '../../molecules/InstagramEmbed';
 import { ImageWithCaption } from '../../molecules/ImageWithCaption';
+import { AdSection } from '../AdSection';
 
 interface ArticleContentProps {
   content: string;
@@ -148,9 +149,22 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
         {renderContent(content)}
       </div>
 
-      {/* Advertisement Placeholder */}
-      <div className="my-12 p-6 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-center text-gray-500 text-sm">ADVERTISEMENT</p>
+      {/* Content Advertisement */}
+      <div className="my-12">
+        <AdSection 
+          placement="content-ad" 
+          size="header" 
+          rotationInterval={7000}
+        />
+      </div>
+
+      {/* Breaking News Pre-Ad */}
+      <div className="my-8">
+        <AdSection 
+          placement="breaking-pre" 
+          size="regular" 
+          rotationInterval={6000}
+        />
       </div>
 
       {/* Breaking News Banner (like Kumparan) */}
@@ -168,6 +182,15 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
             Lihat Breaking News
           </button>
         </div>
+      </div>
+
+      {/* Breaking News Post-Ad */}
+      <div className="my-8">
+        <AdSection 
+          placement="breaking-post" 
+          size="header" 
+          rotationInterval={8000}
+        />
       </div>
 
       {/* Follow Us Section */}

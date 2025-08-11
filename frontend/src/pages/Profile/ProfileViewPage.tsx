@@ -80,22 +80,59 @@ const ProfileViewPage: React.FC<ProfileViewPageProps> = ({ username }) => {
 
       setIsLoadingArticles(true);
       try {
-        // Fetch articles by author ID using dedicated author endpoint
-        const apiUrl = `http://localhost:3001/api/content/author/${authorId}?status=publish&limit=20`;
-        console.log('📡 API URL:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
-          credentials: 'include'
-        });
+        let allPosts = [];
 
-        if (response.ok) {
-          const result = await response.json();
-          console.log('📄 API Response for user', targetUser.user_login, ':', result.data?.posts?.length, 'articles');
-          setUserArticles(result.data?.posts || []);
+        if (isOwnProfile) {
+          // For own profile, fetch published, pending, and draft posts separately
+          console.log('🔍 Fetching published posts...');
+          const publishedResponse = await fetch(`http://localhost:3001/api/content/author/${authorId}?status=publish&limit=20`, {
+            credentials: 'include'
+          });
+          
+          console.log('🔍 Fetching pending posts...');
+          const pendingResponse = await fetch(`http://localhost:3001/api/content/author/${authorId}?status=pending&limit=20`, {
+            credentials: 'include'
+          });
+          
+          console.log('🔍 Fetching draft posts...');
+          const draftResponse = await fetch(`http://localhost:3001/api/content/author/${authorId}?status=draft&limit=20`, {
+            credentials: 'include'
+          });
+
+          if (publishedResponse.ok && pendingResponse.ok && draftResponse.ok) {
+            const publishedResult = await publishedResponse.json();
+            const pendingResult = await pendingResponse.json();
+            const draftResult = await draftResponse.json();
+            
+            allPosts = [
+              ...(publishedResult.data?.posts || []),
+              ...(pendingResult.data?.posts || []),
+              ...(draftResult.data?.posts || [])
+            ];
+            
+            // Sort by date descending
+            allPosts.sort((a, b) => new Date(b.post_date || b.date).getTime() - new Date(a.post_date || a.date).getTime());
+            
+            console.log('📄 Combined posts for', targetUser.user_login, ':', 
+              `${publishedResult.data?.posts?.length || 0} published + ${pendingResult.data?.posts?.length || 0} pending = ${allPosts.length} total`);
+          }
         } else {
-          console.error('Failed to fetch user articles', response.status);
-          setUserArticles([]);
+          // For other profiles, fetch only published posts
+          const apiUrl = `http://localhost:3001/api/content/author/${authorId}?status=publish&limit=20`;
+          console.log('📡 API URL:', apiUrl);
+          
+          const response = await fetch(apiUrl, {
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            allPosts = result.data?.posts || [];
+            console.log('📄 Published posts for', targetUser.user_login, ':', allPosts.length, 'articles');
+          }
         }
+
+        setUserArticles(allPosts);
       } catch (error) {
         console.error('Error fetching user articles:', error);
         setUserArticles([]);
@@ -231,15 +268,34 @@ const ProfileViewPage: React.FC<ProfileViewPageProps> = ({ username }) => {
                     {/* Edit button - show for own articles or admin */}
                     {(isOwnProfile || user?.user_role === 'admin' || user?.user_role === 'superadmin') && (
                       <div className="flex items-center mt-3 space-x-2">
-                        <a
-                          href={`/tulis?edit=${article.id}`}
-                          className="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
-                        >
-                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          Edit
-                        </a>
+                        {(() => {
+                          const isPending = article.status === 'pending' || article.post_status === 'pending';
+                          const isWriter = user?.user_role === 'writer';
+                          const canEdit = !isPending || !isWriter; // Writers can't edit pending posts
+                          
+                          if (canEdit) {
+                            return (
+                              <a
+                                href={`/tulis?edit=${article.id}`}
+                                className="inline-flex items-center px-3 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                              >
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit
+                              </a>
+                            );
+                          } else {
+                            return (
+                              <span className="inline-flex items-center px-3 py-1 text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200 rounded-md cursor-not-allowed">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Under Review
+                              </span>
+                            );
+                          }
+                        })()}
                         <a
                           href={`/posts/${article.id}/analytics`}
                           className="inline-flex items-center px-3 py-1 text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors"
