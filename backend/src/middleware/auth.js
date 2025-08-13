@@ -109,9 +109,17 @@ const authorize = (...roles) => {
     }
 
     const userRole = req.user.user_role;
+    console.log('🔍 Auth Debug - Role check:', { 
+      userRole, 
+      requiredRoles: roles, 
+      userObject: req.user 
+    });
+    
     const hasRequiredRole = roles.some(role => canAccess(userRole, role));
+    console.log('🔍 Auth Debug - Access result:', { hasRequiredRole });
 
     if (!hasRequiredRole) {
+      console.log('❌ Auth Debug - Access denied for:', userRole, 'needs:', roles);
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions',
