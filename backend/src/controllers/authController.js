@@ -70,13 +70,25 @@ class AuthController {
       // Generate token
       const token = user.generateToken();
 
-      // Set cookie
+      // Set cookie with same domain logic as login
+      let cookieDomain;
+      if (process.env.NODE_ENV === 'production') {
+        cookieDomain = '.naramakna.id';
+      } else {
+        const host = req.get('host');
+        if (host && host.includes('naramakna.id')) {
+          cookieDomain = '.naramakna.id';
+        } else {
+          cookieDomain = undefined;
+        }
+      }
+      
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' || req.get('host')?.includes('naramakna.id'),
         sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+        domain: cookieDomain
       });
 
       res.status(201).json({
@@ -194,12 +206,27 @@ class AuthController {
 
       // Set cookie
       const cookieAge = remember_me ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+      
+      // Determine cookie domain based on environment
+      let cookieDomain;
+      if (process.env.NODE_ENV === 'production') {
+        cookieDomain = '.naramakna.id'; // Allow all subdomains
+      } else {
+        // Check if running on VPS dev environment
+        const host = req.get('host');
+        if (host && host.includes('naramakna.id')) {
+          cookieDomain = '.naramakna.id'; // Allow dev.naramakna.id and app.dev.naramakna.id
+        } else {
+          cookieDomain = undefined; // Local development
+        }
+      }
+      
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' || req.get('host')?.includes('naramakna.id'),
         sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         maxAge: cookieAge,
-        domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+        domain: cookieDomain
       });
 
       res.json({
@@ -223,7 +250,23 @@ class AuthController {
   // Logout user
   static async logout(req, res) {
     try {
-      res.clearCookie('token');
+      // Clear cookie with same domain logic
+      let cookieDomain;
+      if (process.env.NODE_ENV === 'production') {
+        cookieDomain = '.naramakna.id';
+      } else {
+        const host = req.get('host');
+        if (host && host.includes('naramakna.id')) {
+          cookieDomain = '.naramakna.id';
+        } else {
+          cookieDomain = undefined;
+        }
+      }
+      
+      res.clearCookie('token', {
+        domain: cookieDomain,
+        path: '/'
+      });
       res.json({
         success: true,
         message: 'Logged out successfully'

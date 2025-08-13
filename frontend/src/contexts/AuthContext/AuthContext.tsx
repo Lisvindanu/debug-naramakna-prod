@@ -98,11 +98,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Login function
   const login = (userData: User, token?: string) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    // Save token to localStorage if provided
     if (token) {
       localStorage.setItem('token', token);
+      console.log('🔧 Token saved to localStorage');
     }
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   // Logout function
