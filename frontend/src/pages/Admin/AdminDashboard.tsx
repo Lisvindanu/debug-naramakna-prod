@@ -49,15 +49,15 @@ const AdminDashboard: React.FC = () => {
   const fetchData = async () => {
     try {
       const [usersRes, pendingPostsRes, pendingWritersRes] = await Promise.all([
-        fetch('http://localhost:3001/api/users', {
+        fetch('http://dev.naramakna.id/api/users', {
           headers: { 'Authorization': `Bearer ${token}` },
           credentials: 'include'
         }),
-        fetch('http://localhost:3001/api/approval/pending', {
+        fetch('http://dev.naramakna.id/api/approval/pending', {
           headers: { 'Authorization': `Bearer ${token}` },
           credentials: 'include'
         }),
-        fetch('http://localhost:3001/api/users/pending-writers', {
+        fetch('http://dev.naramakna.id/api/users/pending-writers', {
           headers: { 'Authorization': `Bearer ${token}` },
           credentials: 'include'
         })
@@ -79,7 +79,7 @@ const AdminDashboard: React.FC = () => {
 
   const approveWriter = async (userId: number, approved: boolean) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/users/${userId}/approve-writer`, {
+      const response = await fetch(`http://dev.naramakna.id/api/users/${userId}/approve-writer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

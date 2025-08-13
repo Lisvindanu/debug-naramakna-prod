@@ -33,7 +33,7 @@ const WriterDashboard: React.FC = () => {
   const fetchData = async () => {
     try {
       const [pendingRes] = await Promise.all([
-        fetch('http://localhost:3001/api/approval/my-pending', {
+        fetch('http://dev.naramakna.id/api/approval/my-pending', {
           headers: { 'Authorization': `Bearer ${token}` },
           credentials: 'include'
         })
@@ -80,7 +80,7 @@ const WriterDashboard: React.FC = () => {
         formData.append('gallery_images', file);
       });
       
-      const response = await fetch('http://localhost:3001/api/content', {
+      const response = await fetch('http://dev.naramakna.id/api/content', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

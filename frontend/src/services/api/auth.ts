@@ -12,7 +12,7 @@ export interface RegisterRequest {
   user_email: string;
   user_pass: string;
   display_name?: string;
-  role_request?: 'user' | 'writer';
+  role_request?: string;
 }
 
 export interface AuthResponse {
@@ -126,15 +126,17 @@ class AuthAPI {
   }
 
   /**
-   * Get current user profile
+   * Get current user profile - WITH TOKEN SUPPORT
    */
   async getProfile(): Promise<ProfileResponse> {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(buildApiUrl('auth/profile'), {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       });
 
@@ -160,7 +162,7 @@ class AuthAPI {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ user_email: email })
+        body: JSON.stringify({ email })
       });
 
       if (!response.ok) {
@@ -185,7 +187,7 @@ class AuthAPI {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ token, new_password: newPassword })
+        body: JSON.stringify({ token, password: newPassword })
       });
 
       if (!response.ok) {
@@ -202,13 +204,7 @@ class AuthAPI {
   /**
    * Update user profile
    */
-  async updateProfile(profileData: {
-    display_name?: string;
-    user_email?: string;
-    bio?: string;
-    current_password?: string;
-    new_password?: string;
-  }): Promise<{ success: boolean; message: string; data?: { user: any } }> {
+  async updateProfile(profileData: any): Promise<ProfileResponse> {
     try {
       const response = await fetch(buildApiUrl('auth/profile'), {
         method: 'PUT',
@@ -231,5 +227,5 @@ class AuthAPI {
   }
 }
 
-// Create singleton instance
 export const authAPI = new AuthAPI();
+export default authAPI;

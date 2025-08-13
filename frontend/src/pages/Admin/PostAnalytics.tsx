@@ -68,7 +68,7 @@ const PostAnalytics: React.FC = () => {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3001/api/analytics/post/${postId}/detailed?period=${period}`, {
+      const response = await fetch(`http://dev.naramakna.id/api/analytics/post/${postId}/detailed?period=${period}`, {
         method: 'GET',
         credentials: 'include',
         headers: {

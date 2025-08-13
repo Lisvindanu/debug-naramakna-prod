@@ -16,11 +16,11 @@ const getImageUrl = (imagePath: string | null) => {
   
   // If it's a relative path starting with /uploads, prepend backend URL
   if (imagePath.startsWith('/uploads/')) {
-    return `http://localhost:3001${imagePath}`;
+    return `http://dev.naramakna.id${imagePath}`;
   }
   
   // Otherwise, assume it's a relative path and prepend backend URL
-  return `http://localhost:3001/uploads/${imagePath}`;
+  return `http://dev.naramakna.id/uploads/${imagePath}`;
 };
 
 const ProfilePage: React.FC = () => {

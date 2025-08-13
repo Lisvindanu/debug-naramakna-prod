@@ -61,7 +61,7 @@ export const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3001/api/content/search/suggestions?query=${encodeURIComponent(searchQuery)}&limit=20`
+        `http://dev.naramakna.id/api/content/search/suggestions?query=${encodeURIComponent(searchQuery)}&limit=20`
       );
       
       if (response.ok) {

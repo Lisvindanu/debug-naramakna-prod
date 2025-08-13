@@ -81,7 +81,7 @@ const ArticleWriterPage: React.FC = () => {
   useEffect(() => {
     const fetchPopularTags = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/category/popular-tags');
+        const response = await fetch('http://dev.naramakna.id/api/category/popular-tags');
         if (response.ok) {
           const data = await response.json();
           setPopularTags(data.data);
@@ -108,7 +108,7 @@ const ArticleWriterPage: React.FC = () => {
         formData.append('image', file);
 
         try {
-          const response = await fetch('http://localhost:3001/api/writer/upload-image', {
+          const response = await fetch('http://dev.naramakna.id/api/writer/upload-image', {
             method: 'POST',
             credentials: 'include',
             body: formData
@@ -143,7 +143,7 @@ const ArticleWriterPage: React.FC = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('http://localhost:3001/api/writer/upload-image', {
+      const response = await fetch('http://dev.naramakna.id/api/writer/upload-image', {
         method: 'POST',
         credentials: 'include',
         body: formData
@@ -214,8 +214,8 @@ const ArticleWriterPage: React.FC = () => {
       // console.log('🔧 Debug: Auto-save called with:', { isEditMode, editId });
       
       const url = isEditMode 
-        ? `http://localhost:3001/api/writer/articles/${editId}`
-        : 'http://localhost:3001/api/writer/articles';
+        ? `http://dev.naramakna.id/api/writer/articles/${editId}`
+        : 'http://dev.naramakna.id/api/writer/articles';
       
       // console.log('🔧 Debug: Auto-save URL:', url);
       // console.log('🔧 Debug: Auto-save method:', isEditMode ? 'PUT' : 'POST');
@@ -228,7 +228,8 @@ const ArticleWriterPage: React.FC = () => {
         method: isEditMode ? 'PUT' : 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(article)
       });
@@ -270,14 +271,15 @@ const ArticleWriterPage: React.FC = () => {
       console.log('🔧 Debug Frontend handleSaveDraft - draftData:', draftData);
       
       const url = isEditMode 
-        ? `http://localhost:3001/api/writer/articles/${editId}`
-        : 'http://localhost:3001/api/writer/articles';
+        ? `http://dev.naramakna.id/api/writer/articles/${editId}`
+        : 'http://dev.naramakna.id/api/writer/articles';
       
       const response = await fetch(url, {
         method: isEditMode ? 'PUT' : 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(draftData)
       });
@@ -332,8 +334,8 @@ const ArticleWriterPage: React.FC = () => {
       console.log('🔧 Debug Frontend handlePublish - full publishData:', publishData);
       
       const url = isEditMode 
-        ? `http://localhost:3001/api/writer/articles/${editId}`
-        : 'http://localhost:3001/api/writer/articles';
+        ? `http://dev.naramakna.id/api/writer/articles/${editId}`
+        : 'http://dev.naramakna.id/api/writer/articles';
       
       // console.log('🔧 Debug: Publish URL:', url);
       // console.log('🔧 Debug: Publish method:', isEditMode ? 'PUT' : 'POST');
@@ -342,7 +344,8 @@ const ArticleWriterPage: React.FC = () => {
         method: isEditMode ? 'PUT' : 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(publishData)
       });
@@ -454,7 +457,7 @@ const ArticleWriterPage: React.FC = () => {
       try {
         console.log('🔧 Debug: Starting to load article for edit, editId:', editId);
         setIsLoadingArticle(true);
-        const response = await fetch(`http://localhost:3001/api/writer/articles/${editId}`, {
+        const response = await fetch(`http://dev.naramakna.id/api/writer/articles/${editId}`, {
           credentials: 'include'
         });
         

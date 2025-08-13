@@ -23,7 +23,7 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/category/navigation', {
+      const response = await fetch('http://dev.naramakna.id/api/category/navigation', {
         credentials: 'include'
       });
       

@@ -53,7 +53,7 @@ const CategoryPage: React.FC = () => {
       }
 
       const response = await fetch(
-        `http://localhost:3001/api/category/${categorySlug}/posts?limit=10&offset=${offset}`,
+        `http://dev.naramakna.id/api/category/${categorySlug}/posts?limit=10&offset=${offset}`,
         { credentials: 'include' }
       );
 

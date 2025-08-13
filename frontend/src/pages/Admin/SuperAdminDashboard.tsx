@@ -86,6 +86,7 @@ interface SystemStats {
 
 const SuperAdminDashboard: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const token = localStorage.getItem('token');
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState<User[]>([]);
   const [admins, setAdmins] = useState<Admin[]>([]);
@@ -131,47 +132,53 @@ const SuperAdminDashboard: React.FC = () => {
       
       // Fetch all data in parallel
       const [usersRes, userStatsRes, contentStatsRes, categoriesRes, postsRes, pendingPostsRes] = await Promise.all([
-        fetch('http://localhost:3001/api/users', {
+        fetch('http://dev.naramakna.id/api/users', {
           method: 'GET',
           credentials: 'include',
           headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch('http://localhost:3001/api/users/stats', {
+        fetch('http://dev.naramakna.id/api/users/stats', {
           method: 'GET',
           credentials: 'include',
           headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch('http://localhost:3001/api/content/stats', {
+        fetch('http://dev.naramakna.id/api/content/stats', {
           method: 'GET',
           credentials: 'include',
           headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch('http://localhost:3001/api/content/categories?minCount=0', {
+        fetch('http://dev.naramakna.id/api/content/categories?minCount=0', {
           method: 'GET',
           credentials: 'include',
           headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch(`http://localhost:3001/api/content/posts-with-views?limit=${pagination.itemsPerPage}&page=${pagination.currentPage}&${new URLSearchParams(
+        fetch(`http://dev.naramakna.id/api/content/posts-with-views?limit=${pagination.itemsPerPage}&page=${pagination.currentPage}&${new URLSearchParams(
           Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ''))
         ).toString()}`, {
           method: 'GET',
           credentials: 'include',
           headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch('http://localhost:3001/api/approval/pending', {
+        fetch('http://dev.naramakna.id/api/approval/pending', {
           method: 'GET',
           credentials: 'include',
           headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         })
@@ -376,7 +383,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   const suspendUser = async (userId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/users/${userId}/suspend`, {
+      const response = await fetch(`http://dev.naramakna.id/api/admin/users/${userId}/suspend`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -401,7 +408,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   const unsuspendUser = async (userId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/users/${userId}/suspend`, {
+      const response = await fetch(`http://dev.naramakna.id/api/admin/users/${userId}/suspend`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -426,7 +433,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   const deleteUser = async (userId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/users/${userId}`, {
+      const response = await fetch(`http://dev.naramakna.id/api/admin/users/${userId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -447,7 +454,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   const deleteArticle = async (articleId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/content/admin/articles/${articleId}`, {
+      const response = await fetch(`http://dev.naramakna.id/api/content/admin/articles/${articleId}`, {
         method: 'DELETE',
         credentials: 'include'
       });

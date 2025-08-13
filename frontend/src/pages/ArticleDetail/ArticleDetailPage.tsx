@@ -65,7 +65,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
 
   const fetchArticleById = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/content/posts/${id}`, {
+      const response = await fetch(`http://dev.naramakna.id/api/content/posts/${id}`, {
         credentials: 'include'
       });
       
@@ -116,7 +116,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
 
   const fetchArticleBySlug = async (slug: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/content/posts/slug/${slug}`, {
+      const response = await fetch(`http://dev.naramakna.id/api/content/posts/slug/${slug}`, {
         credentials: 'include'
       });
       
@@ -169,7 +169,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
 
   const fetchRelatedArticles = async (excludeId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/content/posts?limit=6&exclude=${excludeId}`, {
+      const response = await fetch(`http://dev.naramakna.id/api/content/posts?limit=6&exclude=${excludeId}`, {
         credentials: 'include'
       });
       
@@ -186,7 +186,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
 
   const fetchRelatedArticlesBySlug = async (excludeSlug: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/content/posts?limit=6&excludeSlug=${excludeSlug}`, {
+      const response = await fetch(`http://dev.naramakna.id/api/content/posts?limit=6&excludeSlug=${excludeSlug}`, {
         credentials: 'include'
       });
       
@@ -203,7 +203,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
 
   const fetchComments = async (postId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/content/posts/${postId}/comments`, {
+      const response = await fetch(`http://dev.naramakna.id/api/content/posts/${postId}/comments`, {
         credentials: 'include'
       });
       
@@ -220,7 +220,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
 
   const fetchCommentsBySlug = async (slug: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/content/posts/slug/${slug}/comments`, {
+      const response = await fetch(`http://dev.naramakna.id/api/content/posts/slug/${slug}/comments`, {
         credentials: 'include'
       });
       
@@ -237,7 +237,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
 
   const trackView = async (postId: string) => {
     try {
-      await fetch('http://localhost:3001/api/analytics/track', {
+      await fetch('http://dev.naramakna.id/api/analytics/track', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -258,7 +258,7 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({ articleId,
     if (!article) return;
     
     try {
-      const response = await fetch(`http://localhost:3001/api/content/posts/${article.id}/comments`, {
+      const response = await fetch(`http://dev.naramakna.id/api/content/posts/${article.id}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
